@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ tokens */
+@theme {
+  --color-ink: #0b0a17;
+  --color-panel: #14122a;
+  --color-panel-alt: #17132a;
+  --color-raised: #1b1530;
+  --color-edge: #2e2952;
+  --color-edge-hi: #3a3458;
+  --color-fg: #ece8f5;
+  --color-muted: #a49fbd;
+  --color-dim: #6d6889;
+  --color-lime: #3cff7a;
+  --color-lime-hi: #c8ffd9;
+  --color-lime-dk: #145a32;
+  --color-gold: #ffc94a;
+  --color-gold-dk: #8a5a12;
+  --color-crimson: #ff3b4e;
+  --color-crimson-hi: #ff6b7a;
+}
+
+/* Values that reference runtime variables must be inlined into utilities. */
+@theme inline {
+  --font-pixel: var(--font-press-start), monospace;
+  --font-vt: var(--font-vt323), monospace;
+
+  /* Press Start 2P sizes — scaled up on phones (see :root below) */
+  --text-ps-6: var(--ps6);
+  --text-ps-6--line-height: normal;
+  --text-ps-8: var(--ps8);
+  --text-ps-8--line-height: normal;
+  --text-ps-9: var(--ps9);
+  --text-ps-9--line-height: normal;
+  --text-ps-10: var(--ps10);
+  --text-ps-10--line-height: normal;
+  --text-ps-11: var(--ps11);
+  --text-ps-11--line-height: normal;
+  --text-ps-12: var(--ps12);
+  --text-ps-12--line-height: normal;
+  --text-ps-13: var(--ps13);
+  --text-ps-13--line-height: normal;
+  --text-vt-17: var(--vt17);
+  --text-vt-17--line-height: 1;
+}
+
+/* Responsive type scale. 600px matches the JS mobile breakpoint in layout.ts. */
+:root {
+  --ps6: 6px;
+  --ps8: 8px;
+  --ps9: 9px;
+  --ps10: 10px;
+  --ps11: 11px;
+  --ps12: 12px;
+  --ps13: 13px;
+  --vt17: 17px;
+  --hmin: 0px;
+  --tap: 0px;
+  --stack: row;
+  --field-min: 130px;
+}
+@media (max-width: 599.98px) {
+  :root {
+    --ps6: 12px;
+    --ps8: 12px;
+    --ps9: 12px;
+    --ps10: 12px;
+    --ps11: 13px;
+    --ps12: 14px;
+    --ps13: 14px;
+    --vt17: 18px;
+    --hmin: 14px;
+    --tap: 44px;
+    --stack: column;
+    --field-min: 100%;
+  }
+}
+
+/* ------------------------------------------------------------------ base
+   Kept in the base layer so Tailwind utilities can override it. */
+@layer base {
+  html {
+    scroll-snap-type: y proximity;
+    background: var(--color-ink);
+  }
+  body {
+    margin: 0;
+    background: var(--color-ink);
+    color: var(--color-fg);
+    font: 400 22px/1.2 var(--font-vt323), monospace;
+  }
+  a {
+    color: var(--color-lime);
+  }
+  a:hover {
+    color: var(--color-lime-hi);
+  }
+  ::selection {
+    background: var(--color-lime);
+    color: var(--color-ink);
+  }
+}
+
+/* ------------------------------------------------------------------ pixel borders
+   Hard-edged 4-sided borders made of box-shadows (no rounded corners).
+   Colour via --px-color, optional extra shadow (drop/glow) via --px-extra. */
+@utility pixel-border-2 {
+  box-shadow: 0 -2px 0 0 var(--px-color, var(--color-fg)), 0 2px 0 0 var(--px-color, var(--color-fg)),
+    -2px 0 0 0 var(--px-color, var(--color-fg)), 2px 0 0 0 var(--px-color, var(--color-fg)), var(--px-extra, 0 0 #0000);
+}
+@utility pixel-border-3 {
+  box-shadow: 0 -3px 0 0 var(--px-color, var(--color-fg)), 0 3px 0 0 var(--px-color, var(--color-fg)),
+    -3px 0 0 0 var(--px-color, var(--color-fg)), 3px 0 0 0 var(--px-color, var(--color-fg)), var(--px-extra, 0 0 #0000);
+}
+@utility pixel-border-4 {
+  box-shadow: 0 -4px 0 0 var(--px-color, var(--color-fg)), 0 4px 0 0 var(--px-color, var(--color-fg)),
+    -4px 0 0 0 var(--px-color, var(--color-fg)), 4px 0 0 0 var(--px-color, var(--color-fg)), var(--px-extra, 0 0 #0000);
+}
+/* Arcade sprite-font lettering: hard ink outline + stepped drop, readable on any backdrop. */
+@utility arcade-outline {
+  text-shadow: -2px -2px 0 var(--color-ink), 0 -2px 0 var(--color-ink), 2px -2px 0 var(--color-ink),
+    -2px 0 0 var(--color-ink), 2px 0 0 var(--color-ink), -2px 2px 0 var(--color-ink), 0 2px 0 var(--color-ink),
+    2px 2px 0 var(--color-ink), 4px 4px 0 var(--arcade-drop, var(--color-ink));
+}
+@utility pixel-drop {
+  --px-extra: 10px 12px 0 0 rgba(0, 0, 0, 0.5);
+}
+
+@utility scrollbar-pixel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-edge-hi) transparent;
+}
+
+@utility pixelated {
+  image-rendering: pixelated;
+}
