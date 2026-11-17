@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { isCardOpen } from "@/lib/en-garde/cards";
-import { computeLayout, type Layout, type Pace } from "@/lib/en-garde/layout";
+import { boutY, computeLayout, pageY, type Layout, type Overflow, type Pace, type ViewportInfo } from "@/lib/en-garde/layout";
 import { computeModel, type Model } from "@/lib/en-garde/model";
 import { drawScene, drawWipe } from "@/lib/en-garde/scene";
 
@@ -73,8 +73,63 @@ function useKeyboardViewport(): KeyboardViewport {
   return vv;
 }
 
-export function jumpTo(y: number) {
-  window.scrollTo({ top: y, behavior: "instant" });
+/**
+ * Reads what only CSS knows: the small viewport height (100svh, URL bar shown) and the
+ * side safe-area insets. Uses a hidden fixed probe element that lives as long as the hook.
+ */
+function useViewportProbe() {
+  const probe = useRef<HTMLDivElement | null>(null);
+  useLayoutEffect(() => {
+    const el = document.createElement("div");
+    el.setAttribute("aria-hidden", "true");
+    // 100vh first: browsers without svh keep it and fall back to today's behaviour
+    el.style.cssText =
+      "position:fixed;top:0;left:0;width:0;height:100vh;height:100svh;visibility:hidden;pointer-events:none;" +
+      "padding:0 env(safe-area-inset-right,0px) 0 env(safe-area-inset-left,0px)";
+    document.body.appendChild(el);
+    probe.current = el;
+    return () => {
+      el.remove();
+      probe.current = null;
+    };
+  }, []);
+  return useCallback((): ViewportInfo => {
+    const el = probe.current;
+    if (!el) return {};
+    const cs = getComputedStyle(el);
+    return {
+      stableH: el.offsetHeight,
+      insetX: Math.max(parseFloat(cs.paddingLeft) || 0, parseFloat(cs.paddingRight) || 0),
+    };
+  }, []);
+}
+
+function scrollToPage(y: number) {
+  if (Math.round(y) !== Math.round(window.scrollY)) window.scrollTo({ top: y, behavior: "instant" });
+}
+
+/** Jump to a bout position (lands at the top of a card's reading pause). */
+export function jumpTo(L: Layout, by: number) {
+  scrollToPage(pageY(L, by));
+}
+
+const sameOverflow = (a: Overflow, b: Overflow) =>
+  Object.keys(a).length === Object.keys(b).length && Object.entries(a).every(([k, v]) => b[Number(k)] === v);
+
+/** Card id → how far each card's content overflows its panel. Cards mid-resize keep their last value. */
+function measureOverflow(root: HTMLElement, prev: Overflow): Overflow {
+  const out: Overflow = {};
+  for (const slot of root.querySelectorAll<HTMLElement>("[data-ti]")) {
+    const card = Number(slot.dataset.ti);
+    const panel = slot.querySelector<HTMLElement>("[data-panel]");
+    const content = panel?.firstElementChild;
+    // fractional heights, rounded up: scrollHeight rounds and can leave the last px unreachable
+    const ov = !panel || !content ? 0
+      : slot.dataset.settled == null ? (prev[card] ?? 0)
+      : Math.ceil(content.getBoundingClientRect().height - panel.getBoundingClientRect().height - 0.01);
+    if (ov > 0) out[card] = ov;
+  }
+  return out;
 }
 
 /**
@@ -96,11 +151,15 @@ export function useEnGarde({ pace = "Normal", forceReducedMotion = false }: EnGa
   const tick = useTick(TICK_MS);
   const reduced = usePrefersReducedMotion() || forceReducedMotion;
   const keyboard = useKeyboardViewport();
+  /** Latest layout, bout y and keyboard for event handlers. */
+  const latest = useRef<{ layout: Layout | null; y: number; keyboard: KeyboardViewport }>({ layout: null, y: 0, keyboard });
+  const readViewport = useViewportProbe();
 
   // ---- layout: on mount, resize, font load, and when the HUD's measured height changes
+  const overflow = useRef<Overflow>({});
   const relayout = useCallback(() => {
-    setLayout(computeLayout(window.innerWidth, window.innerHeight, hudRef.current?.offsetHeight || 100, pace));
-  }, [pace]);
+    setLayout(computeLayout(window.innerWidth, window.innerHeight, hudRef.current?.offsetHeight || 100, pace, readViewport(), overflow.current));
+  }, [pace, readViewport]);
 
   useLayoutEffect(() => {
     relayout();
@@ -122,6 +181,53 @@ export function useEnGarde({ pace = "Normal", forceReducedMotion = false }: EnGa
     const h = hudRef.current?.offsetHeight;
     if (layout && h && h !== layout.hudH) relayout();
   }, [layout, relayout]);
+
+  // ---- reading pauses: re-measure card overflow whenever a panel or its content changes size
+  // (fonts, viewport, form messages). Skipped while the mobile keyboard squeezes the card area.
+  const anchor = useRef<{ by: number; card: number; read: number } | null>(null);
+  const hasLayout = layout != null;
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!hasLayout || !root) return;
+    let raf = 0;
+    const measure = () => {
+      raf = 0;
+      if (latest.current.keyboard) return;
+      const next = measureOverflow(root, overflow.current);
+      if (sameOverflow(next, overflow.current)) return;
+      // pauses before the reader move their page position: remember where they are in the bout
+      const L = latest.current.layout;
+      if (L) {
+        const y = window.scrollY;
+        // inclusive end: the last px of a pause and its start share one bout y, so keep the read offset
+        const h = L.holds.find((g) => y >= g.y0 && y <= g.y0 + g.len);
+        anchor.current = { by: boutY(L, y), card: h ? h.card : -1, read: h ? y - h.y0 : 0 };
+      }
+      overflow.current = next;
+      relayout();
+    };
+    // a card mid-resize (contact on the podium) keeps its last value, so its frames needn't re-measure
+    const settled = (e: ResizeObserverEntry) => e.target.closest<HTMLElement>("[data-ti]")?.dataset.settled != null;
+    const ro = new ResizeObserver((entries) => {
+      if (!raf && entries.some(settled)) raf = requestAnimationFrame(measure);
+    });
+    for (const panel of root.querySelectorAll("[data-panel]")) {
+      ro.observe(panel);
+      if (panel.firstElementChild) ro.observe(panel.firstElementChild);
+    }
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, [hasLayout, relayout]);
+
+  useLayoutEffect(() => {
+    const a = anchor.current;
+    if (!layout || !a) return;
+    anchor.current = null;
+    const h = layout.holdOf[a.card];
+    scrollToPage(pageY(layout, a.by) + (h ? Math.min(a.read, h.len) : 0));
+  }, [layout]);
 
   // ---- scroll tracking (rAF-throttled); frozen while a form field has focus so the
   // mobile keyboard scrolling the page doesn't advance the bout.
@@ -157,11 +263,16 @@ export function useEnGarde({ pace = "Normal", forceReducedMotion = false }: EnGa
     };
   }, []);
 
-  // ---- derived model
+  // ---- derived model: the bout runs in bout y (reading pauses removed)
+  const by = layout ? boutY(layout, scroll.y) : 0;
   const model: Model | null = useMemo(
-    () => (layout ? computeModel(layout, { ...scroll, tick, reduced }) : null),
-    [layout, scroll, tick, reduced],
+    () => (layout ? computeModel(layout, { ...scroll, y: by, tick, reduced }) : null),
+    [layout, scroll, by, tick, reduced],
   );
+
+  useEffect(() => {
+    latest.current = { layout, y: by, keyboard };
+  });
 
   // ---- canvas drawing: before paint, so the canvases and the DOM cards always show the same frame
   useLayoutEffect(() => {
@@ -170,24 +281,30 @@ export function useEnGarde({ pace = "Normal", forceReducedMotion = false }: EnGa
     if (wipeRef.current) drawWipe(wipeRef.current, layout, model);
   }, [layout, model, tick]);
 
-  // ---- keyboard a11y: tabbing into a card that isn't on screen jumps to it
-  const latest = useRef({ layout, y: scroll.y });
-  useEffect(() => {
-    latest.current = { layout, y: scroll.y };
-  });
+  // ---- keyboard a11y: tabbing into a card that isn't on screen jumps to it. Focus also scrolls
+  // the card's content to the focused element, so the page scroll is moved to match it.
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
+    let raf = 0;
     const onFocusIn = (e: FocusEvent) => {
       const el = e.target instanceof Element ? e.target.closest<HTMLElement>("[data-ti]") : null;
       const { layout: L, y } = latest.current;
       if (!el || !L) return;
       const card = Number(el.dataset.ti);
-      if (!isCardOpen(L, y, card)) jumpTo(L.cardSnap[card]);
+      if (!isCardOpen(L, y, card)) jumpTo(L, L.cardSnap[card]);
+      const h = L.holdOf[card];
+      const panel = el.querySelector<HTMLElement>("[data-panel]");
+      if (!h || !panel) return;
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => scrollToPage(h.y0 + Math.min(h.len, panel.scrollTop)));
     };
     root.addEventListener("focusin", onFocusIn);
-    return () => root.removeEventListener("focusin", onFocusIn);
+    return () => {
+      root.removeEventListener("focusin", onFocusIn);
+      cancelAnimationFrame(raf);
+    };
   }, [layout]);
 
-  return { rootRef, hudRef, sceneRef, wipeRef, layout, model, scroll, tick, reduced, keyboard };
+  return { rootRef, hudRef, sceneRef, wipeRef, layout, model, scroll, by, tick, reduced, keyboard };
 }

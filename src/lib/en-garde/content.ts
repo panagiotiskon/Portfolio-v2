@@ -1,4 +1,4 @@
-// All portfolio copy lives here so it can be edited without touching the engine.
+import type { LogoName } from "./logos";
 
 export const LINKS = {
   github: "https://github.com/panagiotiskon",
@@ -28,7 +28,6 @@ export const RD = [
 export type Run = { t: string; g: boolean };
 export type Bio = { tag: string; runs: Run[] };
 
-/** `[[text]]` marks a highlighted (gold) run. */
 const parseRuns = (s: string): Run[] =>
   s
     .split(/(\[\[.*?\]\])/)
@@ -97,6 +96,7 @@ export type Experience = {
   company: string;
   brand: string;
   accent: string;
+  logo?: LogoName;
   current?: boolean;
   foot: string;
   bullets: string[];
@@ -104,39 +104,41 @@ export type Experience = {
 
 export const EXP: Experience[] = [
   {
-    tier: "NODE 1 · CURRENT BOUT",
+    tier: "CURRENT BOUT",
     dates: "Dec 2024 – Present",
-    role: "Software Engineer · ReactJS & NodeJS",
+    role: "Software Engineer · ReactJS & ReduxJS",
     company: "Kotsovolos · PPC Group",
     brand: "#b0122c",
     accent: "#ff6b7f",
+    logo: "kotsovolos",
     current: true,
-    foot: "NOW PLAYING ▸ NEXT: THE FINAL",
+    foot: "NOW PLAYING",
     bullets: [
-      "Build and optimize the Kotsovolos website and the KRetail B2B/B2C app for in-store sales agents (ReactJS, Redux-Observables).",
-      "Add features and improve performance in the NodeJS microservices layer.",
+      "Build and optimize the Kotsovolos website and the KRetail B2B/B2C app for in-store sales agents (ReactJS, ReduxJS).",
+      "Analyze & implement new features focused on performance, scalability and UX.",
       "Work in a cross-functional team, keeping frontend and backend tightly integrated.",
     ],
   },
   {
-    tier: "NODE 2 · PREVIOUS ROUND",
+    tier: "PREVIOUS ROUND",
     dates: "Feb 2024 – Aug 2024",
     role: "Software Engineer Intern · Backend",
     company: "Logicea",
     brand: "#7b3fe4",
     accent: "#b39bff",
-    foot: "▲ ADVANCED",
+    logo: "logicea",
+    foot: "COMPLETED",
     bullets: [
       "Built RESTful APIs with Spring Boot and MySQL.",
-      "Integrated and tested third-party APIs.",
-      "Worked in a large team on backend development and deployment.",
+      "Integrated and tested third-party APIs, eg. Stripe.",
+      "Worked in a large Agile team on backend development and deployment.",
     ],
   },
 ];
 
 export const FEATURED_CHIPS = ["Spring AI", "React", "Tailwind"];
 
-export type Project = { title: string; desc: string; chips: string[]; src: string; live?: string };
+export type Project = { title: string; desc: string; chips: string[]; src: string; live?: string; logo?: LogoName };
 
 export const PROJ: Project[] = [
   {
@@ -145,6 +147,7 @@ export const PROJ: Project[] = [
     chips: ["Spring Boot", "React", "MySQL"],
     src: "https://github.com/panagiotiskon/ConnectIn-V2",
     live: "https://connectinapp.xyz",
+    logo: "connectin",
   },
   {
     title: "MiniJava Compiler",
@@ -154,7 +157,6 @@ export const PROJ: Project[] = [
   },
 ];
 
-/** What a milestone is about. Drives its colour on the timeline; "both" = fencing meets code. */
 export type MilestoneKind = "fence" | "code" | "life" | "both";
 export type Milestone = { when: string; kind: MilestoneKind; icon: IconName; title: string; note: string };
 

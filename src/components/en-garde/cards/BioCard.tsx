@@ -10,7 +10,7 @@ export const BioCard = memo(function BioCard({ card, frame, reveal, bio }: Props
     <CardSlot card={card} frame={frame}>
       <Panel className="gap-3.5 bg-panel px-6 pt-4.5 pb-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="m-0 bg-crimson px-2.5 py-1.75 font-pixel text-ps-9 text-white">{bio.tag}</h3>
+          <h3 className="m-0 bg-crimson-dk px-2.5 py-1.75 font-pixel text-ps-9 text-white">{bio.tag}</h3>
           <StatusTag reveal={reveal} />
         </div>
         <p className="m-0 font-vt text-[clamp(21px,2vw,27px)]/[1.25] text-pretty">

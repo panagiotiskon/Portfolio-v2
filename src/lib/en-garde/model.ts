@@ -1,6 +1,6 @@
 // Pure animation model: given the layout and the current scroll position, returns
 // where everything in the arena is and which effects are active. No DOM access.
-import { BANNER, REACH, transTiming, type Layout, type Seg, type TransTiming } from "./layout";
+import { BANNER, REACH, REST, transTiming, type Layout, type Seg, type TransTiming } from "./layout";
 import { ADV, EG, I1, L1, L2, L4, LX, RET, SHIFT, type BugState, type Pose } from "./pixel";
 
 export const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
@@ -191,7 +191,7 @@ export function computeModel(L: Layout, { y, dir, moving, tick, reduced: red }: 
     spark: fxOn && q >= HIT && q < 0.5 ? (q - HIT) / 0.05 : -1,
     burst: fxOn && q >= HIT && q < 0.5 ? (q - HIT) / 0.05 : -1,
     shake: fxOn && q >= HIT && q < 0.47,
-    toucheP: fxOn && q >= HIT && q < 0.58 ? (q - HIT) / 0.13 : -1,
+    toucheP: fxOn && q >= HIT && q < REST ? (q - HIT) / (REST - HIT) : -1,
     riposteP: fxOn && !isFinal && q >= 0.7 && q < 0.8 ? (q - 0.7) / 0.1 : -1,
     bgFx: fxOn ? (q >= HIT && q < 0.48 ? 1 : !isFinal && q >= 0.7 && q < 0.73 ? -1 : 0) : 0,
     wipe: curtain(s, q, red),

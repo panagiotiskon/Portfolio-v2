@@ -2,7 +2,7 @@ import { memo } from "react";
 import type { CardFrame, Reveal } from "@/lib/en-garde/cards";
 import { FEATURED_CHIPS, LINKS } from "@/lib/en-garde/content";
 import { CARD } from "@/lib/en-garde/rounds";
-import { CardSlot, Chip, Panel, PixelIcon, StatusTag, pixelButton, sameCardProps } from "../ui";
+import { CardSlot, Chip, Panel, PixelIcon, StatusTag, TitleRow, pixelButton, sameCardProps } from "../ui";
 
 type Props = { frame: CardFrame; reveal: Reveal };
 
@@ -16,7 +16,7 @@ export const FeaturedCard = memo(function FeaturedCard({ frame, reveal }: Props)
       >
         <div className="flex flex-wrap items-center justify-between gap-2 font-pixel text-ps-9">
           <div className="flex flex-wrap gap-2">
-            <span className="bg-crimson px-2 py-1.5 text-white">BOUT 01</span>
+            <span className="bg-crimson-dk px-2 py-1.5 text-white">BOUT 01</span>
             <span className="bg-gold px-2 py-1.5 text-ink">★ FEATURED BOUT</span>
           </div>
           <StatusTag reveal={reveal} />
@@ -35,10 +35,12 @@ export const FeaturedCard = memo(function FeaturedCard({ frame, reveal }: Props)
             </span>
           </div>
           <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-2.5">
-            <h3 className="m-0 flex flex-col gap-1.5">
-              <span className="font-pixel text-[clamp(16px,1.9vw,22px)] text-gold">FencingRef</span>
-              <span className="font-vt text-[22px] text-fg">AI fencing referee assistant</span>
-            </h3>
+            <TitleRow logo="fencingref">
+              <h3 className="m-0 flex min-w-0 flex-col gap-1.5">
+                <span className="font-pixel text-[clamp(16px,1.9vw,22px)] text-gold">FencingRef</span>
+                <span className="font-vt text-[22px] text-fg">AI fencing referee assistant</span>
+              </h3>
+            </TitleRow>
             <p className="m-0 font-vt text-[22px]/[1.15] text-pretty">Ask a question; every answer cites the rules it stands on.</p>
             <p className="m-0 font-vt text-[20px]/[1.15] text-pretty text-muted">
               The bridge between my two worlds: the referee&apos;s whistle meets the terminal.

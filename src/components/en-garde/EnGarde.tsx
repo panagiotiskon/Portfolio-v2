@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState, type CSSProperties, type RefObject } from "react";
-import { cardFrame, cardReveal, isCardHit, segProgress } from "@/lib/en-garde/cards";
+import { cardFrame, cardReveal, cardScroll, isCardHit, segProgress } from "@/lib/en-garde/cards";
 import { ABILITIES, BACKPACK, BIO, EQUIPPED, EXP, PROJ, RD, RESUME_PREFILL, RF, RN, RS } from "@/lib/en-garde/content";
 import { computeHud } from "@/lib/en-garde/hud";
 import { getIcons } from "@/lib/en-garde/icons";
@@ -34,10 +34,9 @@ export type EnGardeProps = EnGardeOptions & {
  * target and the hit reveals the next portfolio card.
  */
 export default function EnGarde({ crt = true, ...options }: EnGardeProps) {
-  const { rootRef, hudRef, sceneRef, wipeRef, layout, model, scroll, tick, keyboard } = useEnGarde(options);
+  const { rootRef, hudRef, sceneRef, wipeRef, layout, model, scroll, by, tick, keyboard } = useEnGarde(options);
   const contact = useContactForm();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [inspect, setInspect] = useState<string | null>(null);
 
   const L = layout;
   // icons are rasterised on a canvas, so only once we're on the client (layout exists)
@@ -46,12 +45,12 @@ export default function EnGarde({ crt = true, ...options }: EnGardeProps) {
   const onResume = useCallback(() => {
     prefill(RESUME_PREFILL);
     setMenuOpen(false);
-    if (L) jumpTo(L.cardSnap[CARD.contact]);
+    if (L) jumpTo(L, L.cardSnap[CARD.contact]);
   }, [prefill, L]);
   const onJump = useCallback(
     (round: number) => {
       setMenuOpen(false);
-      if (L) jumpTo(roundSnap(L, round));
+      if (L) jumpTo(L, roundSnap(L, round));
     },
     [L],
   );
@@ -63,7 +62,8 @@ export default function EnGarde({ crt = true, ...options }: EnGardeProps) {
           <Arena
             L={L}
             m={model}
-            y={scroll.y}
+            y={by}
+            pageY={scroll.y}
             moving={scroll.moving}
             tick={tick}
             keyboard={keyboard}
@@ -73,8 +73,6 @@ export default function EnGarde({ crt = true, ...options }: EnGardeProps) {
             crt={crt}
             menuOpen={menuOpen}
             onToggleMenu={() => setMenuOpen((v) => !v)}
-            inspect={inspect}
-            onInspect={setInspect}
             contact={contact}
             onResume={onResume}
             onJump={onJump}
@@ -90,7 +88,10 @@ export default function EnGarde({ crt = true, ...options }: EnGardeProps) {
 type ArenaProps = {
   L: Layout;
   m: Model;
+  /** Bout y (drives the arena). */
   y: number;
+  /** Raw page scroll (drives card reading). */
+  pageY: number;
   moving: boolean;
   tick: number;
   keyboard: ReturnType<typeof useEnGarde>["keyboard"];
@@ -100,18 +101,18 @@ type ArenaProps = {
   crt: boolean;
   menuOpen: boolean;
   onToggleMenu: () => void;
-  inspect: string | null;
-  onInspect: (s: string) => void;
   contact: ReturnType<typeof useContactForm>;
   onResume: () => void;
   onJump: (round: number) => void;
 };
 
-function Arena({ L, m, y, moving, tick, keyboard, hudRef, sceneRef, wipeRef, crt, menuOpen, onToggleMenu, inspect, onInspect, contact, onResume, onJump }: ArenaProps) {
+function Arena({ L, m, y, pageY, moving, tick, keyboard, hudRef, sceneRef, wipeRef, crt, menuOpen, onToggleMenu, contact, onResume, onJump }: ArenaProps) {
   const { W, S } = L;
   const red = m.red;
-  const blinkOn = (tick >> 1) % 2 === 0;
-  const card = (id: number, maxW: number) => ({ frame: cardFrame(L, m, y, id, maxW), reveal: cardReveal(L, m, id) });
+
+  const blinkOn = red || (tick >> 1) % 2 === 0;
+  const frame = (id: number, maxW: number) => ({ ...cardFrame(L, m, y, id, maxW), ...cardScroll(L, pageY, id, !!keyboard) });
+  const card = (id: number, maxW: number) => ({ frame: frame(id, maxW), reveal: cardReveal(L, m, id) });
 
   // area between the HUD and the fencer where cards live (shrinks with the mobile keyboard)
   const areaTop = L.areaTop + (keyboard ? keyboard.top : 0);
@@ -132,16 +133,12 @@ function Arena({ L, m, y, moving, tick, keyboard, hudRef, sceneRef, wipeRef, crt
     },
     [red, invProgress, itemTotal],
   );
-  const cw = Math.min(960, W - (L.mob ? 32 : 24)) - 44;
-  const rowW = W < 620 ? cw : cw - 120;
-  const eqW = L.mob ? Math.floor((cw - 30) / 4) : Math.max(96, Math.floor((rowW - 48) / 5));
-  const bpW = L.mob ? eqW : Math.max(90, Math.floor(eqW * 0.86));
 
   // overlays
   const cs = m.s;
   const fs = Math.round(m.ox - m.camX);
   const flash = toucheFlashPos(L, m);
-  const maxY = L.trackH - L.H;
+  const maxY = L.end;
   const atRest =
     cs.kind === "title" || (cs.kind === "touche" && ((m.q >= 0.5 && m.q < 0.62) || m.q >= 0.97)) || (cs.kind === "trans" && m.q >= 0.97);
   const inIntro = m.intro >= 0;
@@ -151,12 +148,15 @@ function Arena({ L, m, y, moving, tick, keyboard, hudRef, sceneRef, wipeRef, crt
     <>
       {/* scroll track: provides the document height and snap points */}
       <div aria-hidden="true" className="pointer-events-none relative" style={{ height: L.trackH }}>
-        {L.snaps.map((top) => (
-          <div key={top} className="absolute left-0 size-px snap-start" style={{ top }} />
+        {/* a reading pause is one snap area taller than the viewport: free scrolling inside it */}
+        {L.snaps.map(({ y: top, span }) => (
+          <div key={top} className="absolute left-0 w-px snap-start" style={{ top, height: span ? span + L.H : 1 }} />
         ))}
       </div>
 
-      <main className="fixed inset-0 overflow-hidden bg-ink">
+      {/* clip, not hidden: a hidden-overflow box is still scrollable, and focusing a control in a
+          card parked off screen would scroll the whole arena sideways */}
+      <main className="fixed inset-0 overflow-clip bg-ink">
         <div className="absolute inset-0" style={{ transform: m.shake ? `translate(${S}px,${-S}px)` : "none" }}>
           <canvas ref={sceneRef} aria-hidden="true" className="pixelated absolute top-0 left-0" style={{ width: L.Wa * S, height: L.Ha * S }} />
           <VictoryLabel
@@ -167,27 +167,23 @@ function Arena({ L, m, y, moving, tick, keyboard, hudRef, sceneRef, wipeRef, crt
 
           <div className="absolute inset-x-0" style={{ top: areaTop, height: areaH, "--area-h": `${areaH}px` } as CSSProperties}>
             <TitleCard
-              frame={cardFrame(L, m, y, CARD.title, 960)}
+              frame={frame(CARD.title, 960)}
               blinkOn={blinkOn}
               still={red}
               onResume={onResume}
             />
-            <ProfileCard frame={cardFrame(L, m, y, CARD.profile, 900)} fill={statFill} />
+            <ProfileCard frame={frame(CARD.profile, 900)} fill={statFill} />
             {BIO.map((bio, k) => (
               <BioCard key={bio.tag} card={CARD.bios[k]} bio={bio} {...card(CARD.bios[k], 780)} />
             ))}
             <InventoryCard
               {...card(CARD.inventory, 960)}
               itemAnim={itemAnim}
-              equippedWidth={eqW}
-              backpackWidth={bpW}
-              inspect={inspect}
-              onInspect={onInspect}
             />
             {EXP.map((exp, k) => {
               const id = CARD.exps[k];
               const glowing = exp.current && isCardHit(L, m, id);
-              return <ExperienceCard key={exp.company} card={id} exp={exp} glow={glowing ? (tick % 4 < 2 ? 30 : 16) : null} {...card(id, 780)} />;
+              return <ExperienceCard key={exp.company} card={id} exp={exp} glow={glowing ? (red || tick % 4 < 2 ? 30 : 16) : null} {...card(id, 780)} />;
             })}
             <FeaturedCard {...card(CARD.featured, Math.min(980, W - 48))} />
             {PROJ.map((p, k) => (
@@ -239,7 +235,7 @@ function Arena({ L, m, y, moving, tick, keyboard, hudRef, sceneRef, wipeRef, crt
         )}
 
         {/* bout progress: a quiet strip along the bottom edge */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 z-3 h-0.75 bg-white/4">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-[env(safe-area-inset-bottom)] z-3 h-0.75 bg-white/4">
           {/* scaled, not resized: no layout per scroll frame. The 4px head is a sibling so it isn't squashed. */}
           <div className="absolute inset-0 origin-left bg-lime/35" style={{ transform: `scaleX(${hud.xp})` }} />
           <div className="absolute inset-0" style={{ transform: `translateX(${hud.xp * 100}%)` }}>

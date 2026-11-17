@@ -43,6 +43,16 @@ export const TrophyCard = memo(function TrophyCard({ frame, reveal }: Props) {
           <StatusTag reveal={reveal} />
         </div>
 
+        {/* the key comes before the run: the flag colours are needed to read it */}
+        <ul aria-label="Key" className="m-0 flex list-none flex-wrap gap-x-5 gap-y-1 p-0 font-vt text-vt-17 text-muted">
+          {LEGEND.map(([label, color]) => (
+            <li key={label} className="flex items-center gap-2">
+              <span aria-hidden="true" className="size-2.5" style={{ background: color }} />
+              {label}
+            </li>
+          ))}
+        </ul>
+
         <div className="@container">
           <ol
             className={`relative m-0 flex list-none flex-col gap-4 p-0 before:absolute before:inset-y-4.5 before:left-4 before:w-1 before:bg-gold-dk @min-[780px]:grid @min-[780px]:grid-cols-12 @min-[780px]:grid-rows-[auto_40px_auto] @min-[780px]:gap-0 @min-[780px]:before:hidden`}
@@ -54,14 +64,6 @@ export const TrophyCard = memo(function TrophyCard({ frame, reveal }: Props) {
           </ol>
         </div>
 
-        <ul aria-label="Key" className="m-0 flex list-none flex-wrap gap-x-5 gap-y-1 p-0 font-vt text-vt-17 text-muted">
-          {LEGEND.map(([label, color]) => (
-            <li key={label} className="flex items-center gap-2">
-              <span aria-hidden="true" className="size-2.5" style={{ background: color }} />
-              {label}
-            </li>
-          ))}
-        </ul>
       </Panel>
     </CardSlot>
   );

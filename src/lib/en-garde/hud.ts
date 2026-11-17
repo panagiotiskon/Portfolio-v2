@@ -4,7 +4,8 @@ import type { Layout } from "./layout";
 import { clamp, type Model } from "./model";
 import { TOTAL_ROUNDS } from "./rounds";
 
-export type HudSection = { round: number; label: string; long: string; current: boolean };
+/** `name` and `abbr` are both rendered: the desktop nav shows whichever fits its column. */
+export type HudSection = { round: number; name: string; abbr: string; long: string; current: boolean };
 
 export type Hud = {
   round: number;
@@ -30,8 +31,9 @@ export type Hud = {
 
 export function computeHud(L: Layout, m: Model, y: number, tick: number): Hud {
   const narrow = L.W < 760;
-  const maxY = L.trackH - L.H;
-  const flash = tick % 2 ? "#ff3b4e" : "#ffc94a";
+  const maxY = L.end;
+  // reduced motion: hold one colour instead of flashing
+  const flash = !m.red && tick % 2 ? "#ff3b4e" : "#ffc94a";
   const pad = (n: number) => (m.scoreOn ? String(n).padStart(2, "0") : "--");
   const sub = m.win
     ? "VICTORY · 10–9"
@@ -57,7 +59,8 @@ export function computeHud(L: Layout, m: Model, y: number, tick: number): Hud {
     xp: Math.round(clamp(y / maxY) * 1000) / 1000,
     sections: Array.from({ length: TOTAL_ROUNDS - 1 }, (_, i) => i + 2).map((r) => ({
       round: r,
-      label: narrow ? RS[r] : RN[r],
+      name: RN[r],
+      abbr: RS[r],
       long: `R${r} · ${RN[r]}`,
       current: r === m.round,
     })),

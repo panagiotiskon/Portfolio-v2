@@ -13,7 +13,7 @@ const SMALL_BTN = "inline-flex min-h-(--tap) box-border items-center justify-cen
 
 export function DesktopHud({ hud, hudRef, onJump }: Props) {
   return (
-    <header ref={hudRef} className="absolute inset-x-0 top-0 z-6 bg-ink px-3.5 py-2.5 shadow-[0_4px_0_0_var(--color-edge)]">
+    <header ref={hudRef} className="absolute inset-x-0 top-0 z-6 bg-ink pt-[max(10px,env(safe-area-inset-top))] pr-[max(14px,env(safe-area-inset-right))] pb-2.5 pl-[max(14px,env(safe-area-inset-left))] shadow-[0_4px_0_0_var(--color-edge)]">
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2.5">
         <div className="flex min-w-0 flex-col gap-1.5">
           <span
@@ -28,19 +28,24 @@ export function DesktopHud({ hud, hudRef, onJump }: Props) {
 
         <Scoreboard hud={hud} />
 
-        <nav aria-label="Sections" className="flex flex-wrap justify-end gap-1.5">
-          {hud.sections.map((s) => (
-            <button
-              key={s.round}
-              type="button"
-              onClick={() => onJump(s.round)}
-              aria-current={s.current ? "step" : undefined}
-              className={`${SMALL_BTN} px-1.75 py-1.5 hover:shadow-[0_0_0_2px_var(--color-gold)] ${s.current ? "bg-gold text-ink" : "bg-raised text-muted"}`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </nav>
+        {/* full names need ~470px; below that the column swaps to the 3-letter labels, so the bar never wraps */}
+        <div className="@container min-w-0">
+          <nav aria-label="Sections" className="flex flex-wrap justify-end gap-1.5">
+            {hud.sections.map((s) => (
+              <button
+                key={s.round}
+                type="button"
+                onClick={() => onJump(s.round)}
+                aria-current={s.current ? "step" : undefined}
+                title={s.long}
+                className={`${SMALL_BTN} px-1.75 py-1.5 @max-[480px]:px-1 hover:shadow-[0_0_0_2px_var(--color-gold)] ${s.current ? "bg-gold text-ink" : "bg-raised text-muted"}`}
+              >
+                <span className="@max-[480px]:hidden">{s.name}</span>
+                <span className="hidden @max-[480px]:inline">{s.abbr}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
       </div>
     </header>
   );

@@ -18,6 +18,8 @@
   --color-gold-dk: #8a5a12;
   --color-crimson: #ff3b4e;
   --color-crimson-hi: #ff6b7a;
+  /* tag ground under white text: 5.9:1 (crimson itself is 3.5:1) */
+  --color-crimson-dk: #c8102e;
 }
 
 /* Values that reference runtime variables must be inlined into utilities. */
@@ -101,6 +103,13 @@
   }
 }
 
+/* Each element's own extra shadow. Not inherited: a card's drop or glow must not leak onto the
+   buttons and tiles inside it (it drew the featured card's red frame around its PLAY LIVE button). */
+@property --px-extra {
+  syntax: "*";
+  inherits: false;
+}
+
 /* ------------------------------------------------------------------ pixel borders
    Hard-edged 4-sided borders made of box-shadows (no rounded corners).
    Colour via --px-color, optional extra shadow (drop/glow) via --px-extra. */
@@ -124,6 +133,17 @@
 }
 @utility pixel-drop {
   --px-extra: 10px 12px 0 0 rgba(0, 0, 0, 0.5);
+}
+/* small hard drop for buttons and logo tiles */
+@utility pixel-drop-sm {
+  --px-extra: 4px 4px 0 0 rgba(0, 0, 0, 0.55);
+}
+
+/* two-frame sprite bob for the "▼ MORE" cue */
+@keyframes nudge {
+  50% {
+    transform: translateY(3px);
+  }
 }
 
 @utility scrollbar-pixel {
