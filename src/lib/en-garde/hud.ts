@@ -57,7 +57,8 @@ export function computeHud(L: Layout, m: Model, y: number, tick: number): Hud {
     mePlus: m.toucheP >= 0 && m.toucheP < 0.6,
     bugPlus: m.riposteP >= 0 && m.riposteP < 0.8,
     xp: Math.round(clamp(y / maxY) * 1000) / 1000,
-    sections: Array.from({ length: TOTAL_ROUNDS - 1 }, (_, i) => i + 2).map((r) => ({
+    // every round from R1 (title); the desktop nav leaves R1 out, the phone menu shows it
+    sections: Array.from({ length: TOTAL_ROUNDS }, (_, i) => i + 1).map((r) => ({
       round: r,
       name: RN[r],
       abbr: RS[r],

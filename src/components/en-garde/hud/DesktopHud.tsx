@@ -31,7 +31,7 @@ export function DesktopHud({ hud, hudRef, onJump }: Props) {
         {/* full names need ~470px; below that the column swaps to the 3-letter labels, so the bar never wraps */}
         <div className="@container min-w-0">
           <nav aria-label="Sections" className="flex flex-wrap justify-end gap-1.5">
-            {hud.sections.map((s) => (
+            {hud.sections.filter((s) => s.round > 1).map((s) => (
               <button
                 key={s.round}
                 type="button"

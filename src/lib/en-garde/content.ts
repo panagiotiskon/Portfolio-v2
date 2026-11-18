@@ -11,7 +11,7 @@ export const LINKS = {
 };
 
 /** Round names, indexed 1..6 (index 0 unused). */
-export const RN = ["", "TITLE", "ABOUT", "EXPERIENCE", "PROJECTS", "TROPHIES", "CONTACT"];
+export const RN = ["", "START","ABOUT", "EXPERIENCE", "PROJECTS", "TROPHIES", "CONTACT"];
 export const RF = ["", "TITLE SCREEN", "CHARACTER SELECT", "CAREER PATH", "TOURNAMENT", "TROPHY ROOM", "FINAL ROUND"];
 export const RS = ["", "TTL", "ABT", "EXP", "PRJ", "TRO", "CON"];
 
@@ -152,6 +152,7 @@ export const PROJECTS: Project[] = [
     artLabel: ["NDVI SCAN", "1 PLOT FLAGGED"],
     src: "https://github.com/panagiotiskon/myField-GenAISummitHackathon",
     live: "https://myfield-vert.vercel.app/",
+    logo: "myfield",
   },
   {
     title: "FencingRef",

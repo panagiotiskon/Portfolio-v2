@@ -1,5 +1,6 @@
 import { memo } from "react";
 import Image from "next/image";
+import portrait from "../../../../public/portrait.png";
 import type { CardFrame } from "@/lib/en-garde/cards";
 import { PROFILE, STATS } from "@/lib/en-garde/content";
 import { CARD } from "@/lib/en-garde/rounds";
@@ -23,7 +24,7 @@ export const ProfileCard = memo(function ProfileCard({ frame, fill }: Props) {
         <div className="flex flex-wrap gap-x-7.5 gap-y-5">
           <div className="flex min-w-0 flex-[1_1_300px] items-start gap-4.5">
             <div className="size-32 flex-none bg-ink shadow-[0_0_0_4px_var(--color-gold)]">
-              <Image src="/portrait.png" alt="Pixel-art portrait of Panagiotis" width={128} height={128} className="pixelated block size-32" />
+              <Image src={portrait} alt="Pixel-art portrait of Panagiotis" width={128} height={128} className="pixelated block size-32" />
             </div>
             <dl className="m-0 grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1.5 font-vt text-vt-sm">
               {PROFILE.map(([k, v]) => (

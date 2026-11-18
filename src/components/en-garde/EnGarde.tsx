@@ -145,6 +145,7 @@ function Arena({ L, m, y, pageY, moving, tick, keyboard, hudRef, sceneRef, crt, 
       <main className="fixed inset-0 overflow-clip bg-ink">
         <div className="absolute inset-0" style={{ transform: m.shake ? `translate(${S}px,${-S}px)` : "none" }}>
           <canvas ref={sceneRef} aria-hidden="true" className="pixelated absolute top-0 left-0" style={{ width: L.Wa * S, height: L.Ha * S }} />
+          <CrtScanlines on={crt} />
           <VictoryLabel
             x={(fs + 24) * S}
             y={(L.pisteTop - 40 - Math.round(m.podK * L.lift) + 6) * S - 12}
@@ -187,8 +188,6 @@ function Arena({ L, m, y, pageY, moving, tick, keyboard, hudRef, sceneRef, crt, 
             <span className="absolute inset-y-0 -left-1 w-1 bg-lime/80" />
           </div>
         </div>
-
-        <CrtScanlines on={crt} />
       </main>
     </>
   );

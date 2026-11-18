@@ -43,7 +43,7 @@ export function CrtScanlines({ on }: { on: boolean }) {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 z-8 bg-[repeating-linear-gradient(to_bottom,rgba(0,0,0,.24)_0px,rgba(0,0,0,.24)_2px,transparent_2px,transparent_4px)]"
+      className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(0,0,0,.24)_0px,rgba(0,0,0,.24)_2px,transparent_2px,transparent_4px)]"
       style={{ opacity: on ? 1 : 0 }}
     />
   );

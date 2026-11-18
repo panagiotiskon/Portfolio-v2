@@ -30,16 +30,20 @@ export const AboutCard = memo(function AboutCard({ frame, reveal, itemAnim }: Pr
           <StatusTag reveal={reveal} />
         </div>
 
-        <div className="flex flex-col gap-2.5 font-vt text-vt-body text-pretty">
-          {BIO.paras.map((runs, k) => (
-            <p key={k} className="m-0 max-w-[62ch]">
-              {runs.map((r, i) => (
-                <span key={i} className={r.g ? "text-gold" : "text-fg"}>
-                  {r.t}
-                </span>
-              ))}
-            </p>
-          ))}
+        {/* wide card: the two paragraphs (developer | fencer) sit side by side so the 62ch measure
+            doesn't leave the right third empty; the fencing one is longer, so it gets the wider column */}
+        <div className="@container">
+          <div className="flex flex-col gap-2.5 font-vt text-vt-body text-pretty @min-[760px]:grid @min-[760px]:grid-cols-[minmax(0,4fr)_minmax(0,5fr)] @min-[760px]:gap-0">
+            {BIO.paras.map((runs, k) => (
+              <p key={k} className="m-0 max-w-[62ch] @min-[760px]:max-w-none @min-[760px]:not-first:ml-6 @min-[760px]:not-first:border-l-2 @min-[760px]:not-first:border-edge @min-[760px]:not-first:pl-6">
+                {runs.map((r, i) => (
+                  <span key={i} className={r.g ? "text-gold" : "text-fg"}>
+                    {r.t}
+                  </span>
+                ))}
+              </p>
+            ))}
+          </div>
         </div>
 
         <div className="flex flex-col gap-3.5 border-t-2 border-edge pt-4">

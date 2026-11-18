@@ -1,7 +1,7 @@
 // Company marks redrawn as pixel art, hand-drawn on a grid from each company's official artwork
 // (downsampling turns them to mush at this size). Rendered as SVG paths on a square plate.
 
-export type LogoName = "kotsovolos" | "logicea" | "connectin" | "fencingref";
+export type LogoName = "kotsovolos" | "logicea" | "connectin" | "fencingref" | "myfield";
 
 type Grid = string[];
 type PixelLogoDef = {
@@ -55,6 +55,17 @@ export const LOGOS: Record<LogoName, PixelLogoDef> = {
     colors: { "#": "#e8e6df", r: "#e8483f" },
     bg: "#0c0d10",
     dots: "#252831",
+  },
+  // myField favicon: isometric field cut by two roads, one pale parcel flagged; mint on deep teal
+  myfield: {
+    rows: [
+      "........###.........", ".......######.......", "......########......", ".......########.....",
+      "...##...#####.......", ".######..##....###..", "#######........#####", "######.....lll..####",
+      ".###.....#..lll..##.", "......####..lll.....", "....#######..lll....", ".....#######..l.....",
+      ".......#####........", "........####........",
+    ],
+    colors: { "#": "#22d07f", l: "#b4f2d0" },
+    bg: "#0c2227",
   },
 };
 
