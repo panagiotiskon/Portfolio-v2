@@ -52,7 +52,6 @@ function StatBar({ label, value, filled }: { label: string; value: number; fille
   const on = value === 10 ? "bg-gold" : "bg-lime";
   return (
     <div className="grid grid-cols-[17ch_minmax(0,1fr)_2ch] items-center gap-2.5 font-vt text-vt-sm">
-      {/* VT323 is monospaced: 17ch fits the longest label ("DRIVE TO SUCCEED") on one line */}
       <span>{label}</span>
       <div role="img" aria-label={`${label} ${value} of 10`} className="flex gap-0.75">
         {Array.from({ length: 10 }, (_, k) => (

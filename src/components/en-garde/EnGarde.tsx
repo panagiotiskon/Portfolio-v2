@@ -149,7 +149,8 @@ function Arena({ L, m, y, pageY, moving, tick, keyboard, hudRef, sceneRef, crt, 
           <VictoryLabel
             x={(fs + 24) * S}
             y={(L.pisteTop - 40 - Math.round(m.podK * L.lift) + 6) * S - 12}
-            opacity={m.podK > 0.6 ? clamp((m.podK - 0.6) / 0.4) : 0}
+            // phones: the card sits right above the podium and its heading already says VICTORY
+            opacity={!L.mob && m.podK > 0.6 ? clamp((m.podK - 0.6) / 0.4) : 0}
             score={score}
           />
 
@@ -175,6 +176,7 @@ function Arena({ L, m, y, pageY, moving, tick, keyboard, hudRef, sceneRef, crt, 
             menuTop={L.areaTop - 14 + 3}
             onToggleMenu={onToggleMenu}
             onJump={onJump}
+            red={red}
           />
         ) : (
           <DesktopHud hud={hud} hudRef={hudRef} onJump={onJump} />

@@ -132,7 +132,6 @@ export function CardSlot({ card, frame, children }: { card: number; frame: CardF
       data-ti={card}
       data-settled={frame.settled || undefined}
       className="absolute inset-y-0 left-0 flex items-center-safe"
-      // reduced motion cross-fades cards in place: a faded-out card must not catch clicks or focus
       style={{
         width: frame.width,
         transform: frame.transform,

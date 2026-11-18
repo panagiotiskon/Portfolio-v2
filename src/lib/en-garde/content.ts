@@ -4,13 +4,13 @@ export const LINKS = {
   github: "https://github.com/panagiotiskon",
   linkedin: "https://www.linkedin.com/in/panagiotis-kontoeidis/",
   fencingRef: "https://fencingref.xyz/",
-  /** Contact address on the victory card. Empty hides the email buttons. */
-  email: "",
-  /** Resume file in /public (e.g. "/resume.pdf"). Null hides every resume button. */
+  email: "panos.kontoeidis@gmail.com",
   resume: null as string | null,
 };
 
-/** Round names, indexed 1..6 (index 0 unused). */
+/** Line under the victory card heading: the ask. */
+export const VICTORY_PITCH = "You made it this far. If you're building something, or just want to chat, I'd like to hear about it.";
+
 export const RN = ["", "START","ABOUT", "EXPERIENCE", "PROJECTS", "TROPHIES", "CONTACT"];
 export const RF = ["", "TITLE SCREEN", "CHARACTER SELECT", "CAREER PATH", "TOURNAMENT", "TROPHY ROOM", "FINAL ROUND"];
 export const RS = ["", "TTL", "ABT", "EXP", "PRJ", "TRO", "CON"];
@@ -40,13 +40,12 @@ export const PROFILE = [
 ] as const;
 
 export const STATS: [string, number][] = [
-  ["FRONTEND", 10],
+  ["FRONTEND", 9],
   ["BACKEND", 8],
   ["CREATIVITY", 9],
-  ["DRIVE TO SUCCEED", 10],
-  ["TEAMWORK", 10],
-  ["COMMUNICATION", 9],
+  ["CURIOSITY", 10],
   ["ADAPTABILITY", 8],
+  ["TEAMWORK", 10],
 ];
 
 export type IconName =
@@ -93,7 +92,7 @@ export const EXP: Experience[] = [
     bullets: [
       "Build and optimize the Kotsovolos website and the KRetail B2B/B2C app for in-store sales agents (ReactJS, ReduxJS).",
       "Analyze & implement new features focused on performance, scalability and UX.",
-      "Work in a cross-functional team, keeping frontend and backend tightly integrated.",
+      "Work in an agile cross-functional team, keeping frontend and backend tightly integrated.",
     ],
   },
   {
