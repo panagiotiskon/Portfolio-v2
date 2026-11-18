@@ -104,8 +104,17 @@ function useViewportProbe() {
   }, []);
 }
 
+/**
+ * What scrolls the bout. Touch devices scroll an inner box (see useEnGarde); null means the window.
+ * Module-level so `jumpTo` works from event handlers outside the hook.
+ */
+let scrollEl: HTMLElement | null = null;
+
+/** Page y: the scroll position of whatever scrolls the bout. */
+const readY = () => (scrollEl ? scrollEl.scrollTop : typeof window === "undefined" ? 0 : window.scrollY);
+
 function scrollToPage(y: number) {
-  if (Math.round(y) !== Math.round(window.scrollY)) window.scrollTo({ top: y, behavior: "instant" });
+  if (Math.round(y) !== Math.round(readY())) (scrollEl ?? window).scrollTo({ top: y, behavior: "instant" });
 }
 
 /** Jump to a bout position (lands at the top of a card's reading pause). */
@@ -141,9 +150,19 @@ export function useEnGarde({ pace = "Normal", forceReducedMotion = false }: EnGa
   const hudRef = useRef<HTMLElement>(null);
   const sceneRef = useRef<HTMLCanvasElement>(null);
 
+  // Touch devices scroll an inner box instead of the window. Scrolling the window makes the
+  // browser hide and show its address bar, which slides the whole arena up and down with it.
+  // Only read on the client; nothing that depends on it renders before the first layout.
+  const [inner] = useState(() => typeof window !== "undefined" && window.matchMedia("(hover: none) and (pointer: coarse)").matches);
+  const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
+  const scrollerRef = useCallback((el: HTMLDivElement | null) => {
+    scrollEl = el;
+    setScroller(el);
+  }, []);
+
   const [layout, setLayout] = useState<Layout | null>(null);
   const [scroll, setScroll] = useState<ScrollState>(() => ({
-    y: typeof window === "undefined" ? 0 : window.scrollY,
+    y: readY(),
     dir: 1,
     moving: false,
   }));
@@ -197,7 +216,7 @@ export function useEnGarde({ pace = "Normal", forceReducedMotion = false }: EnGa
       // pauses before the reader move their page position: remember where they are in the bout
       const L = latest.current.layout;
       if (L) {
-        const y = window.scrollY;
+        const y = readY();
         // inclusive end: the last px of a pause and its start share one bout y, so keep the read offset
         const h = L.holds.find((g) => y >= g.y0 && y <= g.y0 + g.len);
         anchor.current = { by: boutY(L, y), card: h ? h.card : -1, read: h ? y - h.y0 : 0 };
@@ -239,7 +258,7 @@ export function useEnGarde({ pace = "Normal", forceReducedMotion = false }: EnGa
       raf = requestAnimationFrame(() => {
         raf = 0;
         if (freezeY.current) return;
-        const y = window.scrollY;
+        const y = readY();
         // commit inside this frame so the scene tracks the scroll without a frame of lag
         flushSync(() => setScroll((s) => ({ y, dir: y < s.y ? -1 : y > s.y ? 1 : s.dir, moving: y !== s.y || s.moving })));
         clearTimeout(idle);
@@ -250,17 +269,18 @@ export function useEnGarde({ pace = "Normal", forceReducedMotion = false }: EnGa
     const onFocusIn = (e: FocusEvent) => { if (isField(e)) freezeY.current = true; };
     const onFocusOut = (e: FocusEvent) => { if (isField(e)) freezeY.current = false; };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
+    const target = scroller ?? window;
+    target.addEventListener("scroll", onScroll, { passive: true });
     document.addEventListener("focusin", onFocusIn);
     document.addEventListener("focusout", onFocusOut);
     return () => {
-      window.removeEventListener("scroll", onScroll);
+      target.removeEventListener("scroll", onScroll);
       document.removeEventListener("focusin", onFocusIn);
       document.removeEventListener("focusout", onFocusOut);
       cancelAnimationFrame(raf);
       clearTimeout(idle);
     };
-  }, []);
+  }, [scroller]);
 
   // ---- derived model: the bout runs in bout y (reading pauses removed)
   const by = layout ? boutY(layout, scroll.y) : 0;
@@ -304,5 +324,5 @@ export function useEnGarde({ pace = "Normal", forceReducedMotion = false }: EnGa
     };
   }, [layout]);
 
-  return { rootRef, hudRef, sceneRef, layout, model, scroll, by, tick, reduced, keyboard };
+  return { rootRef, hudRef, sceneRef, scrollerRef, inner, layout, model, scroll, by, tick, reduced, keyboard };
 }

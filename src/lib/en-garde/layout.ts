@@ -58,7 +58,7 @@ export type CardWindow = { inS: number; inE: number; outS: number; outE: number 
  * under the finger would fight the page for every swipe). Instead the bout stops at the card's
  * resting point `at` for `len` px of page scroll, and that scroll moves the card's content.
  *
- * Two coordinate spaces: page y (window.scrollY, includes every pause) and bout y (what segments,
+ * Two coordinate spaces: page y (readY() in useEnGarde: window or the touch scroller, includes every pause) and bout y (what segments,
  * windows and snaps are written in, pauses removed). `y0` is the page y where the pause starts.
  */
 export type Hold = { card: number; at: number; len: number; y0: number };

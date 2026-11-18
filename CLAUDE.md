@@ -45,7 +45,7 @@ Data flows one way: `content` → `rounds` → `layout` → `model` → (`cards`
 
 Tall cards do not scroll on their own, because a nested scroller would fight page swipes. Instead, `layout.ts` puts a `Hold`: the bout stops at the card's resting point for `len` px of page scroll, and that scroll moves the card's content (`readOffset`). This gives two coordinate spaces:
 
-- **page y**: `window.scrollY`, includes every pause.
+- **page y**: the scroll position, which includes every pause. It is `window.scrollY` on desktop. On touch devices (`(hover: none) and (pointer: coarse)`) the bout scrolls an inner fixed box instead, with the arena sticky inside it, so the address bar never hides and slides the arena up and down. Always read it with `readY()` and move it with `scrollToPage()`/`jumpTo()` in `useEnGarde.ts`, never with `window` directly.
 - **bout y**: what segments, windows and snaps are written in, with pauses removed.
 
 Convert with `boutY(L, pageY)` and `pageY(L, boutY)`. Mixing the two is the most likely source of scroll bugs. Overflow is measured from the DOM in `useEnGarde.ts`, so layout depends on rendered card heights. When the layout changes, the hook re-anchors the scroll so the user stays at the same bout position. When the mobile keyboard is open, cards fall back to native scroll (`read: null`).

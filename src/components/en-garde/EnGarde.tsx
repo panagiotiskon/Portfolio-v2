@@ -31,7 +31,7 @@ export type EnGardeProps = EnGardeOptions & {
  * target and the hit reveals the next portfolio card.
  */
 export default function EnGarde({ crt = true, ...options }: EnGardeProps) {
-  const { rootRef, hudRef, sceneRef, layout, model, scroll, by, tick, keyboard } = useEnGarde(options);
+  const { rootRef, hudRef, sceneRef, scrollerRef, inner, layout, model, scroll, by, tick, keyboard } = useEnGarde(options);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const L = layout;
@@ -59,6 +59,8 @@ export default function EnGarde({ crt = true, ...options }: EnGardeProps) {
             keyboard={keyboard}
             hudRef={hudRef}
             sceneRef={sceneRef}
+            scrollerRef={scrollerRef}
+            inner={inner}
             crt={crt}
             menuOpen={menuOpen}
             onToggleMenu={() => setMenuOpen((v) => !v)}
@@ -84,13 +86,16 @@ type ArenaProps = {
   keyboard: ReturnType<typeof useEnGarde>["keyboard"];
   hudRef: RefObject<HTMLElement | null>;
   sceneRef: RefObject<HTMLCanvasElement | null>;
+  scrollerRef: (el: HTMLDivElement | null) => void;
+  /** Touch device: the bout scrolls an inner box, not the window (see useEnGarde). */
+  inner: boolean;
   crt: boolean;
   menuOpen: boolean;
   onToggleMenu: () => void;
   onJump: (round: number) => void;
 };
 
-function Arena({ L, m, y, pageY, moving, tick, keyboard, hudRef, sceneRef, crt, menuOpen, onToggleMenu, onJump }: ArenaProps) {
+function Arena({ L, m, y, pageY, moving, tick, keyboard, hudRef, sceneRef, scrollerRef, inner, crt, menuOpen, onToggleMenu, onJump }: ArenaProps) {
   const { S } = L;
   const red = m.red;
 
@@ -130,19 +135,24 @@ function Arena({ L, m, y, pageY, moving, tick, keyboard, hudRef, sceneRef, crt, 
   // the current job's card pulses once its target is hit
   const glow = isCardHit(L, m, CARD.experience) ? (red || tick % 4 < 2 ? 30 : 16) : null;
 
-  return (
-    <>
-      {/* scroll track: provides the document height and snap points */}
-      <div aria-hidden="true" className="pointer-events-none relative" style={{ height: L.trackH }}>
-        {/* a reading pause is one snap area taller than the viewport: free scrolling inside it */}
-        {L.snaps.map(({ y: top, span }) => (
-          <div key={top} className="absolute left-0 w-px snap-start" style={{ top, height: span ? span + L.H : 1 }} />
-        ))}
-      </div>
+  // scroll track: provides the scroll height and snap points. With an inner scroller the sticky
+  // arena already fills the first screen, so the track is one screen shorter.
+  const track = (
+    <div aria-hidden="true" className="pointer-events-none relative" style={{ height: inner ? L.trackH - L.H : L.trackH }}>
+      {/* a reading pause is one snap area taller than the viewport: free scrolling inside it */}
+      {L.snaps.map(({ y: top, span }) => (
+        <div key={top} className="absolute left-0 w-px snap-start" style={{ top, height: span ? span + L.H : 1 }} />
+      ))}
+    </div>
+  );
 
+  const arena = (
+    <>
+      {!inner && track}
       {/* clip, not hidden: a hidden-overflow box is still scrollable, and focusing a control in a
           card parked off screen would scroll the whole arena sideways */}
-      <main className="fixed inset-0 overflow-clip bg-ink">
+      {/* inner: sticky, not fixed. A fixed child would not scroll its scroll-box ancestor on touch. */}
+      <main className={`${inner ? "sticky top-0 h-full" : "fixed inset-0"} overflow-clip bg-ink`}>
         <div className="absolute inset-0" style={{ transform: m.shake ? `translate(${S}px,${-S}px)` : "none" }}>
           <canvas ref={sceneRef} aria-hidden="true" className="pixelated absolute top-0 left-0" style={{ width: L.Wa * S, height: L.Ha * S }} />
           <CrtScanlines on={crt} />
@@ -191,6 +201,15 @@ function Arena({ L, m, y, pageY, moving, tick, keyboard, hudRef, sceneRef, crt, 
           </div>
         </div>
       </main>
+      {inner && track}
     </>
+  );
+
+  return inner ? (
+    <div ref={scrollerRef} className="fixed inset-0 overflow-y-auto overscroll-none [scrollbar-width:none]">
+      {arena}
+    </div>
+  ) : (
+    arena
   );
 }
