@@ -96,8 +96,14 @@ export function ExternalLink({ href, className, style, children }: { href: strin
   );
 }
 
-export function Chip({ children }: { children: ReactNode }) {
-  return <span className="bg-lime-dk px-2 py-1.5 font-pixel text-ps-8 text-lime">+ {children}</span>;
+/** Tech tag. Lime by default; `accent` tints it to a project's own colour. */
+export function Chip({ accent, children }: { accent?: string; children: ReactNode }) {
+  const style = accent ? { color: accent, background: `color-mix(in srgb, ${accent} 18%, transparent)` } : undefined;
+  return (
+    <span className={cx("px-2 py-0.5 font-vt text-vt-sm", !accent && "bg-lime-dk text-lime")} style={style}>
+      + {children}
+    </span>
+  );
 }
 
 // ---------------------------------------------------------------- card scaffolding

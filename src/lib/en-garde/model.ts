@@ -1,18 +1,16 @@
 // Pure animation model: given the layout and the current scroll position, returns
 // where everything in the arena is and which effects are active. No DOM access.
-import { BANNER, REACH, REST, transTiming, type Layout, type Seg, type TransTiming } from "./layout";
+import { HIT, REACH, REST, TRANS, type Layout, type Seg } from "./layout";
 import { ADV, EG, I1, L1, L2, L4, LX, RET, SHIFT, type BugState, type Pose } from "./pixel";
+import { TOTAL_ROUNDS } from "./rounds";
+
+export { HIT };
 
 export const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 export const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 const lerp = (a: number, b: number, u: number) => a + (b - a) * clamp(u);
 
-/** Scroll progress through a touché at which the blade lands. */
-export const HIT = 0.45;
-
 export type MotionInput = { y: number; dir: number; moving: boolean; tick: number; reduced: boolean };
-
-export type Wipe = { mode: 0 | 1; k: number };
 
 export type Model = {
   si: number;
@@ -43,11 +41,6 @@ export type Model = {
   toucheP: number;
   riposteP: number;
   bgFx: number;
-  wipe: Wipe | null;
-  /** Progress (0..1) through the round-intro hold, or -1 when it isn't showing. */
-  intro: number;
-  /** Progress (0..1) through a brief round change's banner, or -1 when it isn't showing. */
-  banner: number;
   /** HUD round label highlight after the round number changes (0..1), or -1. */
   roundPop: number;
 };
@@ -57,24 +50,16 @@ export function computeModel(L: Layout, { y, dir, moving, tick, reduced: red }: 
   let si = 0;
   for (let k = 0; k < segs.length; k++) if (y >= segs[k].y0) si = k;
   const s = segs[si], q = clamp((y - s.y0) / s.len), T = s.kind === "touche";
-  const tt: TransTiming | null = s.kind === "trans" ? transTiming(s) : null;
+  const tt = s.kind === "trans" ? TRANS : null;
 
   // --- fencer x position along the piste
   let fx = s.xs, walk = false;
   if (s.kind === "trans" && tt) {
-    const { closeE: cE, openS: oS } = tt;
-    if (red) fx = q < cE ? s.xs : s.xe;
-    else if (s.brief) {
-      // no curtain to hide behind: one steady walk past the round sign
+    if (red) fx = q < tt.closeE ? s.xs : s.xe;
+    else {
+      // one steady walk past the round sign into the next round
       fx = lerp(s.xs, s.xe, (q - 0.04) / 0.92);
       walk = q > 0.04 && q < 0.96;
-    } else {
-      // walk up to the sign, cross it behind the curtain, then walk on into the new round
-      fx = q < 0.08 ? s.xs
-        : q < cE ? lerp(s.xs, s.sign - 40, (q - 0.08) / (cE - 0.08))
-        : q < oS ? lerp(s.sign - 40, s.sign - 10, (q - cE) / (oS - cE))
-        : lerp(s.sign - 10, s.xe, (q - oS) / (1 - oS));
-      walk = q > 0.08;
     }
   } else if (s.kind === "touche") {
     if (red) fx = s.R;
@@ -166,15 +151,15 @@ export function computeModel(L: Layout, { y, dir, moving, tick, reduced: red }: 
     if (gq >= HIT) me++;
     if (!g.final && gq >= 0.7) bug++;
   });
-  const round = s.kind === "title" ? 1 : s.kind === "trans" ? (q < transTiming(s).closeE ? s.from : s.to) : s.round;
+  const round = s.kind === "title" ? 1 : s.kind === "trans" ? (q < TRANS.closeE ? s.from : s.to) : s.round;
 
   // --- scoring lamps
   let green = false, redL = false;
   if (s.kind === "touche") {
     green = s.final ? q >= HIT : q >= HIT && q < 0.6;
     redL = !s.final && q >= 0.7 && q < 0.8;
-  } else if (s.kind === "trans" && tt && s.belle && q >= tt.closeE + 0.04 && q < tt.openS - 0.04) {
-    // la belle: both lamps alternate while the final-round screen is up
+  } else if (s.kind === "trans" && tt && s.belle && q >= tt.closeE + 0.04 && q < 0.96) {
+    // la belle (4–4): both lamps alternate on the walk up to the final touch
     const k = Math.floor((q - tt.closeE) / 0.025);
     green = k % 2 === 1;
     redL = k % 2 === 0;
@@ -186,7 +171,7 @@ export function computeModel(L: Layout, { y, dir, moving, tick, reduced: red }: 
     scoreOn: si > 1 || (si === 1 && q >= 0.6),
     belle: (s.kind === "trans" && tt && s.belle && q >= tt.closeE) || (isFinal && q < HIT),
     win: isFinal && q >= HIT,
-    rise: round === 7 ? 1 : 0,
+    rise: round === TOTAL_ROUNDS ? 1 : 0,
     dust: fxOn && q >= 0.36 && q < HIT ? (q - 0.36) / 0.09 : -1,
     spark: fxOn && q >= HIT && q < 0.5 ? (q - HIT) / 0.05 : -1,
     burst: fxOn && q >= HIT && q < 0.5 ? (q - HIT) / 0.05 : -1,
@@ -194,22 +179,8 @@ export function computeModel(L: Layout, { y, dir, moving, tick, reduced: red }: 
     toucheP: fxOn && q >= HIT && q < REST ? (q - HIT) / (REST - HIT) : -1,
     riposteP: fxOn && !isFinal && q >= 0.7 && q < 0.8 ? (q - 0.7) / 0.1 : -1,
     bgFx: fxOn ? (q >= HIT && q < 0.48 ? 1 : !isFinal && q >= 0.7 && q < 0.73 ? -1 : 0) : 0,
-    wipe: curtain(s, q, red),
-    intro: s.kind === "trans" && tt && !s.brief && q >= tt.closeE && q < tt.openS ? (q - tt.closeE) / (tt.openS - tt.closeE) : -1,
-    banner: s.kind === "trans" && s.brief && q >= BANNER.s && q < BANNER.e ? (q - BANNER.s) / (BANNER.e - BANNER.s) : -1,
     roundPop: tt && q >= tt.closeE && q < tt.openE + 0.06 ? (q - tt.closeE) / (tt.openE + 0.06 - tt.closeE) : -1,
   };
-}
-
-/** Curtain state for the round transition. Reduced motion: a plain cut to the intro screen. */
-function curtain(s: Seg, q: number, red: boolean): Wipe | null {
-  if (s.kind !== "trans" || s.brief) return null;
-  const { closeS, closeE, openS, openE } = transTiming(s);
-  if (red) return q >= closeE && q < openS ? { mode: 0, k: 1 } : null;
-  if (q < closeS || q >= openE) return null;
-  if (q < closeE) return { mode: 0, k: (q - closeS) / (closeE - closeS) };
-  if (q < openS) return { mode: 0, k: 1 };
-  return { mode: 1, k: (q - openS) / (openE - openS) };
 }
 
 /** Where the "TOUCHÉ!" label sits, in CSS pixels. */

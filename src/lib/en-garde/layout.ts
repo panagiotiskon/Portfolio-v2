@@ -5,27 +5,21 @@ import { FINAL_CARD, ROUNDS } from "./rounds";
 /** Fencer reach in art pixels: distance from rest position to the target. */
 export const REACH = 63;
 
-/**
- * Full round-transition timeline (progress through a "trans" segment): the fencer walks past
- * the round sign, a curtain closes, the round-intro screen holds long enough to read,
- * then the curtain opens on the next round. Only the opening and the final round get this.
- */
-export const CURTAIN = { sign: 0.12, closeS: 0.3, closeE: 0.4, openS: 0.72, openE: 0.82 } as const;
-
-/**
- * Brief round change (rounds in the middle of the bout): no curtain. The previous card leaves,
- * the fencer keeps walking past the round sign and a banner names the new round over the
- * open arena. Same keys as CURTAIN so the motion code reads both the same way:
- * closeS = previous card gone, closeE = round number flips, openS = next target appears.
- */
-export const BRIEF = { sign: 0.12, closeS: 0.3, closeE: 0.3, openS: 0.5, openE: 0.6 } as const;
+/** Scroll progress through a touché at which the blade lands. */
+export const HIT = 0.45;
+/** Resting point in a touché: the flash has just ended and the green lamp is still lit. */
 export const REST = 0.58;
 
-/** Where the round banner shows during a brief transition. */
-export const BANNER = { s: 0.28, e: 0.94 } as const;
+/**
+ * Round change (progress through a "trans" segment): no interstitial screen. The previous card
+ * leaves, the fencer walks on past the round sign and the HUD flips to the new round.
+ * closeS = previous card gone, closeE = round number flips, openS = next target appears,
+ * openE = the profile card (after the title) is fully in.
+ */
+export const TRANS = { sign: 0.12, closeS: 0.3, closeE: 0.3, openS: 0.5, openE: 0.6 } as const;
 
-export type TransTiming = { sign: number; closeS: number; closeE: number; openS: number; openE: number };
-export const transTiming = (g: TransSeg): TransTiming => (g.brief ? BRIEF : CURTAIN);
+/** The winning card slides in right after the final hit: contact comes with the victory. */
+const FINAL_IN = { s: HIT, e: 0.56 } as const;
 
 export type Pace = "Snappy" | "Normal" | "Leisurely";
 const PACE: Record<Pace, number> = { Snappy: 0.7, Normal: 1, Leisurely: 1.4 };
@@ -39,8 +33,6 @@ export type TransSeg = SegBase & {
   sign: number;
   first: boolean;
   belle: boolean;
-  /** Banner instead of the full curtain + intro screen. */
-  brief: boolean;
   lastB: number | null;
   nB: number;
 };
@@ -136,9 +128,7 @@ export function computeLayout(
   // touché segment: about one swipe on mobile, a few wheel notches on desktop. The card is
   // readable for most of it, so it doesn't need to be long.
   const TU = Math.round(Math.max(520, Hs * (mob ? 1.1 : 0.85)) * pf);
-  // full transition: sized off the viewport, not TU, so the intro screen keeps its reading room
-  const TR = Math.round(Math.max(560, Hs * (mob ? 1.3 : 1)) * pf * 0.75);
-  const TB = Math.round(TU * 0.55); // brief transition (round banner)
+  const TB = Math.round(TU * 0.55); // round change: a short walk past the round sign
   const TI = Math.round(TU * 0.45); // title
   const pisteTop = Math.ceil(Hs / S) - (mob ? 16 : 24);
   const camFrac = mob ? 2 / Wa : W < 700 ? 0.06 : 0.2;
@@ -151,8 +141,8 @@ export function computeLayout(
   const segs: Seg[] = [{ kind: "title", y0: 0, len: TI, xs: 30, xe: 30, round: 1 }];
   let y = TI, x = 30, t = 0;
   for (const [r, cards] of ROUNDS) {
-    const first = r === 2, belle = r === ROUNDS[ROUNDS.length - 1][0], brief = !first && !belle;
-    const tr: TransSeg = { kind: "trans", from: r - 1, to: r, y0: y, len: brief ? TB : TR, xs: x, sign: x + 90, xe: x + 110, first, belle, brief, lastB: null, nB: 0 };
+    const first = r === 2, belle = r === ROUNDS[ROUNDS.length - 1][0];
+    const tr: TransSeg = { kind: "trans", from: r - 1, to: r, y0: y, len: TB, xs: x, sign: x + 90, xe: x + 110, first, belle, lastB: null, nB: 0 };
     segs.push(tr);
     x = tr.xe;
     y += tr.len;
@@ -178,14 +168,9 @@ export function computeLayout(
   const cardSnap: Record<number, number> = { 0: 0, 1: t1.y0 + t1.len };
   const snaps = [0, cardSnap[1]];
   const win: Record<number, CardWindow> = {
-    0: { inS: -1, inE: -1, outS: t1.y0, outE: t1.y0 + t1.len * CURTAIN.closeS },
-    1: { inS: t1.y0 + t1.len * CURTAIN.openS, inE: t1.y0 + t1.len, outS: Infinity, outE: Infinity },
+    0: { inS: -1, inE: -1, outS: t1.y0, outE: t1.y0 + t1.len * TRANS.closeS },
+    1: { inS: t1.y0 + t1.len * TRANS.openS, inE: t1.y0 + t1.len, outS: Infinity, outE: Infinity },
   };
-  // a resting point in the middle of every full round-intro screen (brief banners pass by)
-  const introSnaps = segs
-    .filter((g): g is TransSeg => g.kind === "trans" && !g.brief)
-    .map((g) => Math.round(g.y0 + g.len * ((CURTAIN.closeE + CURTAIN.openS) / 2)));
-  snaps.push(...introSnaps);
   const segOf: Record<number, number> = {};
   let firstTouche = true;
   segs.forEach((g, k) => {
@@ -197,10 +182,10 @@ export function computeLayout(
     snaps.push(v);
     const n = segs[k + 1];
     win[g.card] = {
-      inS: g.y0,
-      inE: g.y0 + g.len * 0.3,
+      inS: g.y0 + (g.final ? g.len * FINAL_IN.s : 0),
+      inE: g.y0 + g.len * (g.final ? FINAL_IN.e : 0.3),
       outS: n ? n.y0 : Infinity,
-      outE: n ? n.y0 + n.len * (n.kind === "trans" ? transTiming(n).closeS : 0.3) : Infinity,
+      outE: n ? n.y0 + n.len * (n.kind === "trans" ? TRANS.closeS : 0.3) : Infinity,
     };
     if (firstTouche) {
       // the profile card stays up until the first lunge pushes it out

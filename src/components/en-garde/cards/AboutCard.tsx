@@ -1,6 +1,6 @@
 import { memo, type CSSProperties, type ReactNode } from "react";
 import type { CardFrame, Reveal } from "@/lib/en-garde/cards";
-import { ABILITIES, BACKPACK, EQUIPPED, type IconName } from "@/lib/en-garde/content";
+import { BACKPACK, BIO, EQUIPPED, type IconName } from "@/lib/en-garde/content";
 import { CARD } from "@/lib/en-garde/rounds";
 import { CardSlot, Panel, PixelIcon, StatusTag, sameCardProps } from "../ui";
 
@@ -10,7 +10,7 @@ export type ItemAnim = { opacity: number; scale: number };
 type Props = {
   frame: CardFrame;
   reveal: Reveal;
-  /** Index → pop-in state, counted across equipped, backpack and abilities in order. */
+  /** Index → pop-in state, counted across equipped then backpack. */
   itemAnim: (index: number) => ItemAnim;
 };
 
@@ -20,18 +20,29 @@ const longestWord = (labels: string[]) => Math.max(...labels.flatMap((l) => l.sp
 // word (+1ch slack for the hyphen kept on a "Redux-" line) plus the tile's side padding
 const EQUIPPED_COLS = { "--tile": `calc(${longestWord(EQUIPPED.map(([n]) => n)) + 1}ch + 8px)` } as CSSProperties;
 
-export const InventoryCard = memo(function InventoryCard({ frame, reveal, itemAnim }: Props) {
-  const bpOffset = EQUIPPED.length;
-  const abOffset = EQUIPPED.length + BACKPACK.length;
+/** Round 2, one touch: who I am (developer and fencer) and the stack I fight with. */
+export const AboutCard = memo(function AboutCard({ frame, reveal, itemAnim }: Props) {
   return (
-    <CardSlot card={CARD.inventory} frame={frame}>
-      <Panel className="gap-3.5 bg-panel px-5.5 pt-4.5 pb-5">
+    <CardSlot card={CARD.about} frame={frame}>
+      <Panel className="gap-4 bg-panel px-5.5 pt-4.5 pb-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="m-0 font-pixel text-ps-13 text-gold">INVENTORY</h2>
+          <h2 className="m-0 bg-crimson-dk px-2.5 py-1.75 font-pixel text-ps-9 text-white">{BIO.tag}</h2>
           <StatusTag reveal={reveal} />
         </div>
 
-        <div className="flex flex-col gap-3.5">
+        <div className="flex flex-col gap-2.5 font-vt text-vt-body text-pretty">
+          {BIO.paras.map((runs, k) => (
+            <p key={k} className="m-0 max-w-[62ch]">
+              {runs.map((r, i) => (
+                <span key={i} className={r.g ? "text-gold" : "text-fg"}>
+                  {r.t}
+                </span>
+              ))}
+            </p>
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-3.5 border-t-2 border-edge pt-4">
           <Shelf title="EQUIPPED" subtitle="daily stack" titleClass="text-gold" list="grid grid-cols-[repeat(auto-fit,minmax(var(--tile),1fr))] gap-3" style={EQUIPPED_COLS}>
             {EQUIPPED.map(([name, icon], n) => (
               <ItemTile key={name} name={name} icon={icon} anim={itemAnim(n)} variant="equipped" />
@@ -39,12 +50,7 @@ export const InventoryCard = memo(function InventoryCard({ frame, reveal, itemAn
           </Shelf>
           <Shelf title="BACKPACK" subtitle="also carried" titleClass="text-fg" list="flex flex-wrap gap-2.5">
             {BACKPACK.map(([name, icon], n) => (
-              <ItemTile key={name} name={name} icon={icon} anim={itemAnim(bpOffset + n)} variant="backpack" />
-            ))}
-          </Shelf>
-          <Shelf title="ABILITIES" subtitle="passive buffs" titleClass="text-lime" list="flex flex-wrap gap-2.5">
-            {ABILITIES.map((name, n) => (
-              <AbilityChip key={name} name={name} gold={n % 2 === 1} anim={itemAnim(abOffset + n)} />
+              <ItemTile key={name} name={name} icon={icon} anim={itemAnim(EQUIPPED.length + n)} variant="backpack" />
             ))}
           </Shelf>
         </div>
@@ -91,24 +97,6 @@ function ItemTile({ name, icon, anim, variant }: { name: string; icon: IconName;
         <PixelIcon name={icon} size={equipped ? 26 : 18} />
         <span className={equipped ? "leading-[.95]" : "whitespace-nowrap"}>{name}</span>
       </span>
-    </li>
-  );
-}
-
-function AbilityChip({ name, gold, anim }: { name: string; gold: boolean; anim: ItemAnim }) {
-  return (
-    <li
-      className="box-border flex min-h-(--tap) items-center gap-2 bg-ink py-1 pr-2.5 pl-1.5"
-      style={{
-        opacity: anim.opacity,
-        transform: `scale(${anim.scale})`,
-        boxShadow: gold
-          ? "0 0 0 2px #8a5a12, 0 0 12px 2px rgba(255,201,74,.28)"
-          : "0 0 0 2px #145a32, 0 0 12px 2px rgba(60,255,122,.28)",
-      }}
-    >
-      <PixelIcon name={gold ? "orbG" : "orb"} size={20} />
-      <span className="text-[18px]/none">{name}</span>
     </li>
   );
 }

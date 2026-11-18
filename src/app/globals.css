@@ -44,18 +44,27 @@
   --text-ps-13--line-height: normal;
   --text-vt-17: var(--vt17);
   --text-vt-17--line-height: 1;
+
+  /* VT323 reading sizes: its x-height is small, so body copy runs larger than usual */
+  --text-vt-body: var(--vtb);
+  --text-vt-body--line-height: 1.22;
+  --text-vt-sm: var(--vts);
+  --text-vt-sm--line-height: 1.15;
 }
 
-/* Responsive type scale. 600px matches the JS mobile breakpoint in layout.ts. */
+/* Responsive type scale. 600px matches the JS mobile breakpoint in layout.ts.
+   Press Start 2P is unreadable under 10px, so the desktop floor is 10px (phones get 12px). */
 :root {
-  --ps6: 6px;
-  --ps8: 8px;
-  --ps9: 9px;
-  --ps10: 10px;
-  --ps11: 11px;
-  --ps12: 12px;
-  --ps13: 13px;
-  --vt17: 17px;
+  --ps6: 8px;
+  --ps8: 10px;
+  --ps9: 11px;
+  --ps10: 12px;
+  --ps11: 12px;
+  --ps12: 13px;
+  --ps13: 14px;
+  --vt17: 18px;
+  --vtb: clamp(22px, 1.65vw, 24px);
+  --vts: 20px;
   --hmin: 0px;
   --tap: 0px;
   --stack: row;
@@ -71,6 +80,8 @@
     --ps12: 14px;
     --ps13: 14px;
     --vt17: 18px;
+    --vtb: 22px;
+    --vts: 20px;
     --hmin: 14px;
     --tap: 44px;
     --stack: column;

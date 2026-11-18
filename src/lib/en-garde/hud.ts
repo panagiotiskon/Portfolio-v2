@@ -36,7 +36,7 @@ export function computeHud(L: Layout, m: Model, y: number, tick: number): Hud {
   const flash = !m.red && tick % 2 ? "#ff3b4e" : "#ffc94a";
   const pad = (n: number) => (m.scoreOn ? String(n).padStart(2, "0") : "--");
   const sub = m.win
-    ? "VICTORY · 10–9"
+    ? `VICTORY · ${m.me}–${m.bug}`
     : m.belle
       ? "LA BELLE – NEXT TOUCH WINS"
       : RF[m.round] + (narrow || RF[m.round] === RN[m.round] ? "" : " · " + RN[m.round]);

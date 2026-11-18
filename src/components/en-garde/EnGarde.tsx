@@ -2,26 +2,23 @@
 
 import { useCallback, useState, type CSSProperties, type RefObject } from "react";
 import { cardFrame, cardReveal, cardScroll, isCardHit, segProgress } from "@/lib/en-garde/cards";
-import { ABILITIES, BACKPACK, BIO, EQUIPPED, EXP, PROJ, RD, RESUME_PREFILL, RF, RN, RS } from "@/lib/en-garde/content";
+import { BACKPACK, EQUIPPED } from "@/lib/en-garde/content";
 import { computeHud } from "@/lib/en-garde/hud";
 import { getIcons } from "@/lib/en-garde/icons";
-import { CURTAIN, roundSnap, type Layout } from "@/lib/en-garde/layout";
+import { TRANS, roundSnap, type Layout } from "@/lib/en-garde/layout";
 import { HIT, clamp, toucheFlashPos, type Model } from "@/lib/en-garde/model";
-import { CARD, TOTAL_ROUNDS } from "@/lib/en-garde/rounds";
-import { CrtScanlines, RoundBanner, RoundIntro, ScrollHint, ToucheFlash, VictoryLabel } from "./ArenaOverlays";
-import { BioCard } from "./cards/BioCard";
-import { ContactCard } from "./cards/ContactCard";
+import { CARD } from "@/lib/en-garde/rounds";
+import { CrtScanlines, ScrollHint, ToucheFlash, VictoryLabel } from "./ArenaOverlays";
+import { AboutCard, type ItemAnim } from "./cards/AboutCard";
 import { ExperienceCard } from "./cards/ExperienceCard";
-import { FeaturedCard } from "./cards/FeaturedCard";
-import { InventoryCard, type ItemAnim } from "./cards/InventoryCard";
 import { ProfileCard } from "./cards/ProfileCard";
-import { ProjectCard } from "./cards/ProjectCard";
+import { ProjectsCard } from "./cards/ProjectsCard";
 import { TitleCard } from "./cards/TitleCard";
 import { TrophyCard } from "./cards/TrophyCard";
+import { VictoryCard } from "./cards/VictoryCard";
 import { DesktopHud } from "./hud/DesktopHud";
 import { MobileHud } from "./hud/MobileHud";
 import { IconsContext } from "./ui";
-import { useContactForm } from "./useContactForm";
 import { jumpTo, useEnGarde, type EnGardeOptions } from "./useEnGarde";
 
 export type EnGardeProps = EnGardeOptions & {
@@ -34,19 +31,12 @@ export type EnGardeProps = EnGardeOptions & {
  * target and the hit reveals the next portfolio card.
  */
 export default function EnGarde({ crt = true, ...options }: EnGardeProps) {
-  const { rootRef, hudRef, sceneRef, wipeRef, layout, model, scroll, by, tick, keyboard } = useEnGarde(options);
-  const contact = useContactForm();
+  const { rootRef, hudRef, sceneRef, layout, model, scroll, by, tick, keyboard } = useEnGarde(options);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const L = layout;
   // icons are rasterised on a canvas, so only once we're on the client (layout exists)
   const icons = L ? getIcons() : null;
-  const { prefill } = contact;
-  const onResume = useCallback(() => {
-    prefill(RESUME_PREFILL);
-    setMenuOpen(false);
-    if (L) jumpTo(L, L.cardSnap[CARD.contact]);
-  }, [prefill, L]);
   const onJump = useCallback(
     (round: number) => {
       setMenuOpen(false);
@@ -69,12 +59,9 @@ export default function EnGarde({ crt = true, ...options }: EnGardeProps) {
             keyboard={keyboard}
             hudRef={hudRef}
             sceneRef={sceneRef}
-            wipeRef={wipeRef}
             crt={crt}
             menuOpen={menuOpen}
             onToggleMenu={() => setMenuOpen((v) => !v)}
-            contact={contact}
-            onResume={onResume}
             onJump={onJump}
           />
         </IconsContext.Provider>
@@ -97,17 +84,14 @@ type ArenaProps = {
   keyboard: ReturnType<typeof useEnGarde>["keyboard"];
   hudRef: RefObject<HTMLElement | null>;
   sceneRef: RefObject<HTMLCanvasElement | null>;
-  wipeRef: RefObject<HTMLCanvasElement | null>;
   crt: boolean;
   menuOpen: boolean;
   onToggleMenu: () => void;
-  contact: ReturnType<typeof useContactForm>;
-  onResume: () => void;
   onJump: (round: number) => void;
 };
 
-function Arena({ L, m, y, pageY, moving, tick, keyboard, hudRef, sceneRef, wipeRef, crt, menuOpen, onToggleMenu, contact, onResume, onJump }: ArenaProps) {
-  const { W, S } = L;
+function Arena({ L, m, y, pageY, moving, tick, keyboard, hudRef, sceneRef, crt, menuOpen, onToggleMenu, onJump }: ArenaProps) {
+  const { S } = L;
   const red = m.red;
 
   const blinkOn = red || (tick >> 1) % 2 === 0;
@@ -118,13 +102,13 @@ function Arena({ L, m, y, pageY, moving, tick, keyboard, hudRef, sceneRef, wipeR
   const areaTop = L.areaTop + (keyboard ? keyboard.top : 0);
   const areaH = keyboard ? Math.max(160, Math.min(L.areaH, keyboard.h - L.areaTop - 8)) : L.areaH;
 
-  // profile stat bars fill in once the curtain opens on round 2
-  const statFill = red ? 1 : clamp((segProgress(m, 1) - CURTAIN.openE) / (1 - CURTAIN.openE));
+  // profile stat bars fill in once the profile card is in on round 2
+  const statFill = red ? 1 : clamp((segProgress(m, 1) - TRANS.openE) / (1 - TRANS.openE));
 
-  // inventory items are always shown; right after the hit they "equip" with a quick staggered pop
-  const invProgress = segProgress(m, L.segOf[CARD.inventory]);
-  const itemTotal = EQUIPPED.length + BACKPACK.length + ABILITIES.length;
-  // stable while the inventory card is parked off screen, so its memo holds
+  // skill items are always shown; right after the hit they "equip" with a quick staggered pop
+  const invProgress = segProgress(m, L.segOf[CARD.about]);
+  const itemTotal = EQUIPPED.length + BACKPACK.length;
+  // stable while the about card is parked off screen, so its memo holds
   const itemAnim = useCallback(
     (n: number): ItemAnim => {
       if (red) return { opacity: 1, scale: 1 };
@@ -141,8 +125,10 @@ function Arena({ L, m, y, pageY, moving, tick, keyboard, hudRef, sceneRef, wipeR
   const maxY = L.end;
   const atRest =
     cs.kind === "title" || (cs.kind === "touche" && ((m.q >= 0.5 && m.q < 0.62) || m.q >= 0.97)) || (cs.kind === "trans" && m.q >= 0.97);
-  const inIntro = m.intro >= 0;
   const hud = computeHud(L, m, y, tick);
+  const score = `${m.me}–${m.bug}`;
+  // the current job's card pulses once its target is hit
+  const glow = isCardHit(L, m, CARD.experience) ? (red || tick % 4 < 2 ? 30 : 16) : null;
 
   return (
     <>
@@ -163,63 +149,22 @@ function Arena({ L, m, y, pageY, moving, tick, keyboard, hudRef, sceneRef, wipeR
             x={(fs + 24) * S}
             y={(L.pisteTop - 40 - Math.round(m.podK * L.lift) + 6) * S - 12}
             opacity={m.podK > 0.6 ? clamp((m.podK - 0.6) / 0.4) : 0}
+            score={score}
           />
 
           <div className="absolute inset-x-0" style={{ top: areaTop, height: areaH, "--area-h": `${areaH}px` } as CSSProperties}>
-            <TitleCard
-              frame={frame(CARD.title, 960)}
-              blinkOn={blinkOn}
-              still={red}
-              onResume={onResume}
-            />
+            <TitleCard frame={frame(CARD.title, 960)} blinkOn={blinkOn} still={red} />
             <ProfileCard frame={frame(CARD.profile, 900)} fill={statFill} />
-            {BIO.map((bio, k) => (
-              <BioCard key={bio.tag} card={CARD.bios[k]} bio={bio} {...card(CARD.bios[k], 780)} />
-            ))}
-            <InventoryCard
-              {...card(CARD.inventory, 960)}
-              itemAnim={itemAnim}
-            />
-            {EXP.map((exp, k) => {
-              const id = CARD.exps[k];
-              const glowing = exp.current && isCardHit(L, m, id);
-              return <ExperienceCard key={exp.company} card={id} exp={exp} glow={glowing ? (red || tick % 4 < 2 ? 30 : 16) : null} {...card(id, 780)} />;
-            })}
-            <FeaturedCard {...card(CARD.featured, Math.min(980, W - 48))} />
-            {PROJ.map((p, k) => (
-              <ProjectCard key={p.title} card={CARD.projects[k]} project={p} bout={k + 2} {...card(CARD.projects[k], 700)} />
-            ))}
+            <AboutCard {...card(CARD.about, 920)} itemAnim={itemAnim} />
+            <ExperienceCard {...card(CARD.experience, 780)} glow={glow} />
+            <ProjectsCard {...card(CARD.projects, 980)} />
             <TrophyCard {...card(CARD.trophies, 980)} />
-            <ContactCard {...card(CARD.contact, 640)} form={contact} messageRows={L.areaH < 420 ? 2 : 3} />
-            {cs.kind === "trans" && cs.brief && (
-              <RoundBanner
-                progress={m.banner}
-                still={red}
-                round={cs.to}
-                total={TOTAL_ROUNDS}
-                title={RF[cs.to] === RN[cs.to] ? RF[cs.to] : `${RF[cs.to]} · ${RN[cs.to]}`}
-                blurb={RD[cs.to]}
-              />
-            )}
+            <VictoryCard frame={frame(CARD.contact, 640)} score={score} />
           </div>
         </div>
 
-        <canvas ref={wipeRef} aria-hidden="true" className="pixelated pointer-events-none absolute top-0 left-0 z-4" style={{ width: L.Wa * S, height: L.Ha * S }} />
-        <RoundIntro
-          intro={m.intro}
-          still={red}
-          from={cs.kind === "trans" ? cs.from : m.round - 1}
-          to={cs.kind === "trans" ? cs.to : m.round}
-          total={TOTAL_ROUNDS}
-          top={L.hudH}
-          blinkOn={blinkOn}
-          short={RS}
-          long={RN}
-          names={RF}
-          blurbs={RD}
-        />
         <ToucheFlash x={flash.x} y={flash.y} opacity={flash.op} scale={flash.sc} />
-        <ScrollHint visible={!inIntro && !moving && blinkOn && y < maxY - 20 && atRest} />
+        <ScrollHint visible={!moving && blinkOn && y < maxY - 20 && atRest} />
 
         {L.mob ? (
           <MobileHud

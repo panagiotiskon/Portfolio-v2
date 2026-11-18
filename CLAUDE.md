@@ -36,9 +36,9 @@ Two layers:
 Data flows one way: `content` → `rounds` → `layout` → `model` → (`cards`, `hud`, `scene`) → components.
 
 - `content.ts` holds **all** portfolio copy. Edit copy only here.
-- `rounds.ts` gives each card a numeric id, built from content counts (0 = title, 1 = profile, then bios, inventory, jobs, featured, projects, trophies, contact). It also maps rounds 2–7 to the card ids they reveal. Adding a job or project extends the timeline, targets and score with no other change.
-- `layout.ts` turns viewport size + measured card overflow into a timeline of segments (`title` / `trans` / `touche`), snap points and per-card slide windows. Rounds in the middle of the bout use a short `BRIEF` banner transition. The opening and final rounds use the full `CURTAIN`.
-- `model.ts` is a pure function from (layout, scroll y, motion input) to the arena state: pose, bug, score, effects. `HIT` = 0.45 is the progress point in a touché where the blade lands.
+- `rounds.ts` gives each card a fixed id (0 = title, 1 = profile, then about, experience, projects, trophies, contact) and maps rounds 2–6 to them. The bout is a 5-touch pool bout: one touch per round, the bug ripostes after each of the first four, so it ends 5–4 with la belle at 4–4. A new job or project goes inside its existing card, not into a new touch.
+- `layout.ts` turns viewport size + measured card overflow into a timeline of segments (`title` / `trans` / `touche`), snap points and per-card slide windows. Every round change is a short `TRANS` walk past the round sign: no interstitial screen, the HUD carries the round. The final card (contact) slides in only after the winning hit.
+- `model.ts` is a pure function from (layout, scroll y, motion input) to the arena state: pose, bug, score, effects. `HIT` = 0.45 (defined in `layout.ts`) is the progress point in a touché where the blade lands.
 - `cards.ts` gives each card's slide transform, opacity, glow and content scroll.
 
 ### Reading pauses (page y vs bout y)
@@ -60,6 +60,6 @@ Convert with `boutY(L, pageY)` and `pageY(L, boutY)`. Mixing the two is the most
 - Pixel sprites and dither helpers: `pixel.ts`. 12×12 icons rasterised to data URLs: `icons.ts`. Company logos as pixel grids: `logos.ts`.
 - Portrait: `public/portrait.png` (square, shown at 128×128, pixelated).
 
-## Known gap
+## Contact
 
-The contact form only shows a success state. `submitContact` in `src/components/en-garde/useContactForm.ts` is not wired to a backend yet.
+There is no form. The victory card (`cards/VictoryCard.tsx`) shows direct links. `LINKS.email` and `LINKS.resume` in `content.ts` turn on the email/copy buttons and the resume download (title + victory cards); both are hidden while unset.

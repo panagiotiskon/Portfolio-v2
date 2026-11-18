@@ -1,5 +1,4 @@
 import type { Ref } from "react";
-import { LINKS } from "@/lib/en-garde/content";
 import { lampStyle, type Hud } from "@/lib/en-garde/hud";
 
 type Props = {
@@ -64,12 +63,6 @@ export function MobileHud({ hud, hudRef, menuOpen, menuTop, onToggleMenu, onJump
               {s.long}
             </button>
           ))}
-          <a href={LINKS.github} target="_blank" rel="noopener" className={`${MENU_BTN} mt-1.5 justify-center bg-raised text-fg no-underline hover:text-fg`}>
-            GITHUB ↗
-          </a>
-          <a href={LINKS.linkedin} target="_blank" rel="noopener" className={`${MENU_BTN} justify-center bg-raised text-fg no-underline hover:text-fg`}>
-            LINKEDIN ↗
-          </a>
         </nav>
       )}
     </>

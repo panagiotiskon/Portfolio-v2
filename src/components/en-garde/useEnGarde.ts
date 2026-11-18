@@ -5,7 +5,7 @@ import { flushSync } from "react-dom";
 import { isCardOpen } from "@/lib/en-garde/cards";
 import { boutY, computeLayout, pageY, type Layout, type Overflow, type Pace, type ViewportInfo } from "@/lib/en-garde/layout";
 import { computeModel, type Model } from "@/lib/en-garde/model";
-import { drawScene, drawWipe } from "@/lib/en-garde/scene";
+import { drawScene } from "@/lib/en-garde/scene";
 
 export type EnGardeOptions = {
   /** Scroll distance per beat. */
@@ -140,7 +140,6 @@ export function useEnGarde({ pace = "Normal", forceReducedMotion = false }: EnGa
   const rootRef = useRef<HTMLDivElement>(null);
   const hudRef = useRef<HTMLElement>(null);
   const sceneRef = useRef<HTMLCanvasElement>(null);
-  const wipeRef = useRef<HTMLCanvasElement>(null);
 
   const [layout, setLayout] = useState<Layout | null>(null);
   const [scroll, setScroll] = useState<ScrollState>(() => ({
@@ -183,7 +182,7 @@ export function useEnGarde({ pace = "Normal", forceReducedMotion = false }: EnGa
   }, [layout, relayout]);
 
   // ---- reading pauses: re-measure card overflow whenever a panel or its content changes size
-  // (fonts, viewport, form messages). Skipped while the mobile keyboard squeezes the card area.
+  // (fonts, viewport). Skipped while the mobile keyboard squeezes the card area.
   const anchor = useRef<{ by: number; card: number; read: number } | null>(null);
   const hasLayout = layout != null;
   useEffect(() => {
@@ -278,7 +277,6 @@ export function useEnGarde({ pace = "Normal", forceReducedMotion = false }: EnGa
   useLayoutEffect(() => {
     if (!layout || !model) return;
     if (sceneRef.current) drawScene(sceneRef.current, layout, model, tick);
-    if (wipeRef.current) drawWipe(wipeRef.current, layout, model);
   }, [layout, model, tick]);
 
   // ---- keyboard a11y: tabbing into a card that isn't on screen jumps to it. Focus also scrolls
@@ -306,5 +304,5 @@ export function useEnGarde({ pace = "Normal", forceReducedMotion = false }: EnGa
     };
   }, [layout]);
 
-  return { rootRef, hudRef, sceneRef, wipeRef, layout, model, scroll, by, tick, reduced, keyboard };
+  return { rootRef, hudRef, sceneRef, layout, model, scroll, by, tick, reduced, keyboard };
 }

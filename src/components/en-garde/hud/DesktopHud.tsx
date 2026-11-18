@@ -57,7 +57,7 @@ function Scoreboard({ hud }: { hud: Hud }) {
       <div role="img" aria-label={hud.scoreAria} className="flex items-center gap-2 bg-raised px-2 py-1.5 shadow-[0_0_0_3px_var(--color-edge)]">
         <span className="h-4 w-5.5" style={lampStyle(hud.greenOn, "green")} />
         <ScoreSlot name={hud.meName} nameClass="text-lime" value={hud.me} plus={hud.mePlus} plusSide="left" />
-        <span className="mt-2.5 font-pixel text-ps-12 text-dim">:</span>
+        <span className="mt-2.5 font-pixel text-ps-12 text-muted">:</span>
         <ScoreSlot name="THE BUG" nameClass="text-crimson" value={hud.bug} plus={hud.bugPlus} plusSide="right" />
         <PixelIcon name="bug" size={20} />
         <span className="h-4 w-5.5" style={lampStyle(hud.redOn, "red")} />

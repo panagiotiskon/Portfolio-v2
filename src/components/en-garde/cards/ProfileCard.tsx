@@ -25,7 +25,7 @@ export const ProfileCard = memo(function ProfileCard({ frame, fill }: Props) {
             <div className="size-32 flex-none bg-ink shadow-[0_0_0_4px_var(--color-gold)]">
               <Image src="/portrait.png" alt="Pixel-art portrait of Panagiotis" width={128} height={128} className="pixelated block size-32" />
             </div>
-            <dl className="m-0 grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1.5 font-vt text-[20px]/[1.1]">
+            <dl className="m-0 grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1.5 font-vt text-vt-sm">
               {PROFILE.map(([k, v]) => (
                 <div key={k} className="contents">
                   <dt className="text-muted">{k}</dt>
@@ -42,10 +42,6 @@ export const ProfileCard = memo(function ProfileCard({ frame, fill }: Props) {
             ))}
           </div>
         </div>
-
-        <p className="m-0 bg-ink px-3.5 py-2.5 font-vt text-[22px]/[1.15] text-pretty text-gold">
-          “Strategy, precision, and an unstoppable drive to improve. On the piste and in code.”
-        </p>
       </Panel>
     </CardSlot>
   );
@@ -54,14 +50,15 @@ export const ProfileCard = memo(function ProfileCard({ frame, fill }: Props) {
 function StatBar({ label, value, filled }: { label: string; value: number; filled: number }) {
   const on = value === 10 ? "bg-gold" : "bg-lime";
   return (
-    <div className="grid grid-cols-[140px_minmax(0,1fr)_26px] items-center gap-2.5">
-      <span className="font-vt text-[19px]">{label}</span>
+    <div className="grid grid-cols-[17ch_minmax(0,1fr)_2ch] items-center gap-2.5 font-vt text-vt-sm">
+      {/* VT323 is monospaced: 17ch fits the longest label ("DRIVE TO SUCCEED") on one line */}
+      <span>{label}</span>
       <div role="img" aria-label={`${label} ${value} of 10`} className="flex gap-0.75">
         {Array.from({ length: 10 }, (_, k) => (
           <span key={k} className={`h-2.75 flex-1 ${k < filled ? on : "bg-edge"}`} />
         ))}
       </div>
-      <span aria-hidden="true" className="text-right font-vt text-[19px] text-muted">
+      <span aria-hidden="true" className="text-right text-muted">
         {value}
       </span>
     </div>

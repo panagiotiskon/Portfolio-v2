@@ -17,11 +17,10 @@ export type Theme = {
 export const THEMES: Record<number, Theme> = {
   1: { wall: "#100e22", band: "#151230", crowd: ["#221c42", "#3a3266"], board: "#1a1636", light: "#453e86", lit: "#7d74c4", prop: "flag" },
   2: { wall: "#0d1324", band: "#121a30", crowd: ["#1b2442", "#2f3c64"], board: "#151e3a", light: "#33508a", lit: "#7088c0", prop: "banner" },
-  3: { wall: "#150f1f", band: "#1c1429", crowd: ["#2a1d3a", "#43305c"], board: "#211731", light: "#5a3f7a", lit: "#9a78bc", prop: "rack" },
-  4: { wall: "#0e1122", band: "#14182e", crowd: ["#1c2146", "#323a6a"], board: "#171c3a", light: "#3c4a8e", lit: "#7a86c8", prop: "board" },
-  5: { wall: "#130c1e", band: "#1a1129", crowd: ["#2a1b42", "#48306e"], board: "#201534", light: "#583c8c", lit: "#9a7ad0", prop: "flag" },
-  6: { wall: "#15110b", band: "#1d1710", crowd: ["#2e2416", "#4a3a22"], board: "#231b10", light: "#7a5c2c", lit: "#c49a52", prop: "shelf" },
-  7: { wall: "#0b1517", band: "#0f1d20", crowd: ["#17302f", "#28504c"], board: "#122626", light: "#2c6e64", lit: "#62b8a6", prop: "spot" },
+  3: { wall: "#0e1122", band: "#14182e", crowd: ["#1c2146", "#323a6a"], board: "#171c3a", light: "#3c4a8e", lit: "#7a86c8", prop: "board" },
+  4: { wall: "#130c1e", band: "#1a1129", crowd: ["#2a1b42", "#48306e"], board: "#201534", light: "#583c8c", lit: "#9a7ad0", prop: "flag" },
+  5: { wall: "#15110b", band: "#1d1710", crowd: ["#2e2416", "#4a3a22"], board: "#231b10", light: "#7a5c2c", lit: "#c49a52", prop: "shelf" },
+  6: { wall: "#0b1517", band: "#0f1d20", crowd: ["#17302f", "#28504c"], board: "#122626", light: "#2c6e64", lit: "#62b8a6", prop: "spot" },
 };
 
 export type ArenaOpts = {

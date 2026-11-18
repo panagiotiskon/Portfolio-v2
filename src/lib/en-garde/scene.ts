@@ -1,9 +1,9 @@
-// Renders one frame of the arena (and the round-transition wipe) from a Model.
+// Renders one frame of the arena from a Model.
 import { THEMES, drawBg, drawCone, drawGlow, drawVignette } from "./arena";
 import { RN } from "./content";
-import { transTiming, type Layout } from "./layout";
+import { TRANS, type Layout } from "./layout";
 import { HIT, type Model } from "./model";
-import { FRED, PAL, bayer, drawBoard, drawBug, drawCryBug, drawFencer, drawSign, drawStep, fxDust, fxSpark, hash, line, rgba32, type Ctx } from "./pixel";
+import { FRED, PAL, bayer, drawBoard, drawBug, drawCryBug, drawFencer, drawSign, drawStep, fxDust, fxSpark, line, type Ctx } from "./pixel";
 
 function sizeCanvas(cv: HTMLCanvasElement, w: number, h: number) {
   if (cv.width !== w || cv.height !== h) {
@@ -46,7 +46,7 @@ export function drawScene(cv: HTMLCanvasElement, L: Layout, m: Model, tick: numb
     if (g.kind !== "trans") return;
     const sx = Math.round(g.sign - camX);
     if (sx < -70 || sx > Wa + 70) return;
-    drawSign(c, sx, pt, RN[g.to] + " >", k < si || (k === si && q >= transTiming(g).sign));
+    drawSign(c, sx, pt, RN[g.to] + " >", k < si || (k === si && q >= TRANS.sign));
   });
 
   // targets
@@ -59,7 +59,7 @@ export function drawScene(cv: HTMLCanvasElement, L: Layout, m: Model, tick: numb
     const cur =
       !hit &&
       (k === si ||
-        (cs.kind === "trans" && q >= transTiming(cs).openS && k === si + 1) ||
+        (cs.kind === "trans" && q >= TRANS.openS && k === si + 1) ||
         (cs.kind === "touche" && cs.nextT && q >= 0.76 && k === si + 1));
     drawBoard(c, sx, pt, hit ? "hit" : cur ? "cur" : "dim", pulse);
   });
@@ -168,7 +168,7 @@ function drawBurst(c: Ctx, L: Layout, m: Model, fs: number, Y0: number) {
 
 /** Scrolling text on the LED ribbon board, reacting to the bout. */
 function ribbonFor(m: Model) {
-  if (m.podK > 0 || m.win) return { text: "VICTORY 10-9 - ", color: "#ffc94a" };
+  if (m.podK > 0 || m.win) return { text: `VICTORY ${m.me}-${m.bug} - `, color: "#ffc94a" };
   if (m.riposteP >= 0) return { text: "RIPOSTE! - ", color: "#ff3b4e" };
   if (m.toucheP >= 0) return { text: "TOUCHE! - ", color: "#3cff7a" };
   if (m.belle) return { text: "LA BELLE - NEXT TOUCH WINS - ", color: "#ffc94a" };
@@ -198,61 +198,4 @@ function shadow(c: Ctx, x0: number, x1: number, y: number) {
   for (let x = x0 - 1; x <= x1 + 1; x++) if (bayer(x, y) < 0.5) c.fillRect(x, y + 1, 1, 1);
   c.fillRect(x0 - 1, y, 1, 1);
   c.fillRect(x1, y, 1, 1);
-}
-
-const W_DARK = rgba32("#0b0a17"), W_STRIPE = rgba32("#110f24"), W_MID = rgba32("#1d1838");
-const W_CORE = rgba32("#f2efe6"), W_EDGE = rgba32("#ffc94a"), W_GLOW = rgba32("#8a5a12"), W_SPARK = rgba32("#ffe36b");
-let wipeImg: ImageData | null = null;
-/** What each wipe canvas currently shows, so unchanged frames (e.g. the fully dark hold) skip the per-pixel pass. */
-const wipeShown = new WeakMap<HTMLCanvasElement, string>();
-const smooth = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
-
-/**
- * Round transition: a diagonal sabre slash. A white-hot blade edge sweeps left → right
- * trailing sparks, with an ordered-dither ramp into darkness behind it; the second half
- * sweeps on in the same direction to reveal the next round. Fully dark while the
- * round banner is up (mode 0, k ≥ 0.7 and mode 1, k < 0.3).
- */
-export function drawWipe(cv: HTMLCanvasElement, L: Layout, m: Model) {
-  const { Wa, Ha } = L;
-  sizeCanvas(cv, Wa, Ha);
-  const d = cv.getContext("2d");
-  if (!d) return;
-  const w = m.wipe;
-  if (!w) {
-    if (wipeShown.get(cv) !== `${Wa}|${Ha}|clear`) {
-      d.clearRect(0, 0, Wa, Ha);
-      wipeShown.set(cv, `${Wa}|${Ha}|clear`);
-    }
-    return;
-  }
-  const SL = 0.45, span = Wa + Ha * SL, band = Math.max(14, Math.round(Wa * 0.07)), glow = 8;
-  const f = w.mode === 0
-    ? -glow + (span + band + glow) * smooth(w.k / 0.7)
-    : -band + (span + band + glow) * smooth((w.k - 0.3) / 0.7);
-  const key = `${Wa}|${Ha}|${w.mode}|${f}`;
-  if (wipeShown.get(cv) === key) return;
-  wipeShown.set(cv, key);
-  if (!wipeImg || wipeImg.width !== Wa || wipeImg.height !== Ha) wipeImg = d.createImageData(Wa, Ha);
-  const buf = new Uint32Array(wipeImg.data.buffer);
-  const fs = Math.floor(f / 3);
-  for (let y = 0; y < Ha; y++) {
-    const uy = (Ha - 1 - y) * SL;
-    for (let x = 0; x < Wa; x++) {
-      const u = x + uy, dc = w.mode === 0 ? f - u : u - f; // > 0 on the dark side
-      let px = 0;
-      if (dc >= band) px = Math.floor(u) % 9 === 0 ? W_STRIPE : W_DARK;
-      else if (dc >= 1.5) {
-        const p = (dc - 1.5) / (band - 1.5), b = bayer(x, y);
-        px = b < p ? W_DARK : b < p + 0.3 ? W_MID : 0;
-      } else if (dc >= 0.5) px = W_CORE;
-      else if (dc >= -1) px = W_EDGE;
-      else if (dc > -glow) {
-        const b = bayer(x, y), e = 1 + dc / glow;
-        px = hash(x * 7919 + y * 104729 + fs) % 29 === 0 ? W_SPARK : b < e * 0.5 ? W_GLOW : 0;
-      }
-      buf[y * Wa + x] = px;
-    }
-  }
-  d.putImageData(wipeImg, 0, 0);
 }

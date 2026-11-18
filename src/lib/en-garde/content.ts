@@ -4,29 +4,19 @@ export const LINKS = {
   github: "https://github.com/panagiotiskon",
   linkedin: "https://www.linkedin.com/in/panagiotis-kontoeidis/",
   fencingRef: "https://fencingref.xyz/",
+  /** Contact address on the victory card. Empty hides the email buttons. */
+  email: "",
+  /** Resume file in /public (e.g. "/resume.pdf"). Null hides every resume button. */
+  resume: null as string | null,
 };
 
-export const RESUME_PREFILL =
-  "Hello! I saw your portfolio and would love to request a copy of your resume. Thanks!";
-
-/** Round names, indexed 1..7 (index 0 unused). */
-export const RN = ["", "TITLE", "ABOUT", "SKILLS", "EXPERIENCE", "PROJECTS", "TROPHIES", "CONTACT"];
-export const RF = ["", "TITLE SCREEN", "CHARACTER SELECT", "INVENTORY", "CAREER PATH", "TOURNAMENT", "TROPHY ROOM", "FINAL ROUND"];
-export const RS = ["", "TTL", "ABT", "SKL", "EXP", "PRJ", "TRO", "CON"];
-/** Plain-language "what's in this round", shown on the round-intro screen. */
-export const RD = [
-  "",
-  "",
-  "Who I am, on and off the piste",
-  "The tools and tech I fight with",
-  "Where I've worked so far",
-  "Things I've designed and built",
-  "The road so far, on and off the piste",
-  "Get in touch — one last touch to win",
-];
+/** Round names, indexed 1..6 (index 0 unused). */
+export const RN = ["", "TITLE", "ABOUT", "EXPERIENCE", "PROJECTS", "TROPHIES", "CONTACT"];
+export const RF = ["", "TITLE SCREEN", "CHARACTER SELECT", "CAREER PATH", "TOURNAMENT", "TROPHY ROOM", "FINAL ROUND"];
+export const RS = ["", "TTL", "ABT", "EXP", "PRJ", "TRO", "CON"];
 
 export type Run = { t: string; g: boolean };
-export type Bio = { tag: string; runs: Run[] };
+export type Bio = { tag: string; paras: Run[][] };
 
 const parseRuns = (s: string): Run[] =>
   s
@@ -34,16 +24,13 @@ const parseRuns = (s: string): Run[] =>
     .filter(Boolean)
     .map((t) => (t.startsWith("[[") ? { t: t.slice(2, -2), g: true } : { t, g: false }));
 
-export const BIO: Bio[] = [
-  [
-    "TOUCHÉ 1 · THE DEVELOPER",
-    "Computer Science graduate from the University of Athens, building web applications across the full stack. I started competing in programming and science contests in high school and kept sharpening my skills through hackathons and seminars at university.",
-  ],
-  [
-    "TOUCHÉ 2 · THE FENCER",
-    "18 years in sabre fencing, 10 of them at a professional level. I've represented Greece at the 2026 [[Mediterranean Games]], the 2023 [[European Games]], and European and World Championships. I'm also a certified [[International Fencing Referee]], officiating high-level tournaments.",
-  ],
-].map(([tag, s]) => ({ tag, runs: parseRuns(s) }));
+export const BIO: Bio = {
+  tag: "THE DEVELOPER WHO FENCES",
+  paras: [
+    "Computer Science graduate from the University of Athens, building web applications across the full stack. Programming and science contests since high school, then hackathons and seminars at university.",
+    "Off the keyboard: 18 years in sabre fencing, 10 of them at a professional level. I've represented Greece at the 2026 [[Mediterranean Games]], the 2023 [[European Games]], and European and World Championships, and I'm a certified [[International Fencing Referee]].",
+  ].map(parseRuns),
+};
 
 export const PROFILE = [
   ["NAME", "Panagiotis Kontoeidis"],
@@ -80,14 +67,6 @@ export const BACKPACK: [string, IconName][] = [
   ["REST APIs", "scroll"],
   ["Microservices", "scroll"],
 ];
-export const ABILITIES = [
-  "Communication & Presenting",
-  "Teamwork",
-  "Composure Under Pressure",
-  "Strategic Thinking",
-  "Discipline",
-  "Fair Judgment",
-];
 
 export type Experience = {
   tier: string;
@@ -98,7 +77,6 @@ export type Experience = {
   accent: string;
   logo?: LogoName;
   current?: boolean;
-  foot: string;
   bullets: string[];
 };
 
@@ -112,7 +90,6 @@ export const EXP: Experience[] = [
     accent: "#ff6b7f",
     logo: "kotsovolos",
     current: true,
-    foot: "NOW PLAYING",
     bullets: [
       "Build and optimize the Kotsovolos website and the KRetail B2B/B2C app for in-store sales agents (ReactJS, ReduxJS).",
       "Analyze & implement new features focused on performance, scalability and UX.",
@@ -127,7 +104,6 @@ export const EXP: Experience[] = [
     brand: "#7b3fe4",
     accent: "#b39bff",
     logo: "logicea",
-    foot: "COMPLETED",
     bullets: [
       "Built RESTful APIs with Spring Boot and MySQL.",
       "Integrated and tested third-party APIs, eg. Stripe.",
@@ -136,24 +112,77 @@ export const EXP: Experience[] = [
   },
 ];
 
-export const FEATURED_CHIPS = ["Spring AI", "React", "Tailwind"];
+/** Pixel motif drawn in each project's art box (see ProjectsCard). */
+export type ProjectArt = "parcels" | "whistle" | "network";
 
-export type Project = { title: string; desc: string; chips: string[]; src: string; live?: string; logo?: LogoName };
+export type Project = {
+  title: string;
+  /** Label on the coloured strip above the project. */
+  tag: string;
+  tagline: string;
+  desc: string;
+  note?: string;
+  chips: string[];
+  /** Strip colour, and the text colour on it. */
+  brand: string;
+  onBrand: string;
+  /** Readable tint of the brand on the dark panel: title, chips, art frame. */
+  accent: string;
+  art: ProjectArt;
+  /** Two-line caption under the art. */
+  artLabel: [string, string];
+  src?: string;
+  live?: string;
+  logo?: LogoName;
+};
 
-export const PROJ: Project[] = [
+/** Every project, in order. Each gets its own colour so no two read alike. */
+export const PROJECTS: Project[] = [
+  {
+    title: "myField",
+    tag: "SATELLITE SCREENING",
+    tagline: "Satellite screening for wildfire plot clearing",
+    desc: "Greek landowners must declare each spring that they've cleared dry brush from their plots. myField helps Civil Protection decide which plots to inspect first with Sentinel-2 imagery",
+    note: "Built for the GenAI Summit Hackathon.",
+    chips: ["Next.js", "MapLibre GL", "Sentinel-2", "Turf.js"],
+    brand: "#b8430f",
+    onBrand: "#ffffff",
+    accent: "#ff9a4d",
+    art: "parcels",
+    artLabel: ["NDVI SCAN", "1 PLOT FLAGGED"],
+    src: "https://github.com/panagiotiskon/myField-GenAISummitHackathon",
+    live: "https://myfield-vert.vercel.app/",
+  },
+  {
+    title: "FencingRef",
+    tag: "★ FEATURED BOUT",
+    tagline: "AI fencing referee assistant",
+    desc: "Ask a question; every answer cites the rules it stands on.",
+    note: "Delivered for the fencing community.",
+    chips: ["Spring AI", "React", "Tailwind"],
+    brand: "#ffc94a",
+    onBrand: "#0b0a17",
+    accent: "#ffc94a",
+    art: "whistle",
+    artLabel: ["WHISTLE", "MEETS TERMINAL"],
+    live: LINKS.fencingRef,
+    logo: "fencingref",
+  },
   {
     title: "ConnectIn",
-    desc: "LinkedIn-style professional network with profiles, connections, job listings, private messaging, and personalized recommendations using Matrix Factorization.",
+    tag: "FULL STACK",
+    tagline: "A professional network, LinkedIn-style",
+    desc: "Profiles, connections, job listings and private messaging, with personalised recommendations from Matrix Factorization.",
+    note: "With a recommendation engine built in Spring Boot and MySQL, pre AI era.",
     chips: ["Spring Boot", "React", "MySQL"],
+    brand: "#2c6e7d",
+    onBrand: "#ffffff",
+    accent: "#6fd3e0",
+    art: "network",
+    artLabel: ["WHO TO", "KNOW NEXT"],
     src: "https://github.com/panagiotiskon/ConnectIn-V2",
     live: "https://connectinapp.xyz",
     logo: "connectin",
-  },
-  {
-    title: "MiniJava Compiler",
-    desc: "Compiler for a subset of Java that runs semantic analysis and generates intermediate code.",
-    chips: ["Java", "Visitor Pattern"],
-    src: "https://github.com/panagiotiskon/Minijava-Compiler",
   },
 ];
 

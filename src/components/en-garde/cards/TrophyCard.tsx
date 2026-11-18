@@ -90,8 +90,8 @@ function Checkpoint({ m, col, above }: { m: Milestone; col: number; above: boole
         <span className="px-1.5 py-1 font-pixel text-ps-8 text-ink" style={{ background: k.flag }}>
           {m.when}
         </span>
-        <h3 className="m-0 font-vt text-[20px]/[1.05] font-normal text-balance text-fg">{m.title}</h3>
-        <p className="m-0 font-vt text-vt-17/[1.05] text-pretty text-muted">{m.note}</p>
+        <h3 className="m-0 font-vt text-vt-sm font-normal text-balance text-fg">{m.title}</h3>
+        <p className="m-0 font-vt text-vt-17/[1.15] text-pretty text-muted">{m.note}</p>
       </div>
     </li>
   );
@@ -111,7 +111,7 @@ function NextLevel({ col }: { col: number }) {
         className={`col-start-2 row-start-1 flex min-w-0 flex-col items-start gap-1 @min-[780px]:row-start-3 @min-[780px]:col-start-(--c) @min-[780px]:ml-4 @min-[780px]:self-start @min-[780px]:border-l-2 @min-[780px]:border-(--k) @min-[780px]:pt-3 @min-[780px]:pl-2`}
       >
         <span className="bg-edge-hi px-1.5 py-1 font-pixel text-ps-8 text-muted">Next</span>
-        <p className="m-0 font-vt text-[20px]/[1.05] text-dim @min-[780px]:hidden">To be continued</p>
+        <p className="m-0 font-vt text-vt-sm text-muted @min-[780px]:hidden">To be continued</p>
       </div>
     </li>
   );

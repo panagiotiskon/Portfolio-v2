@@ -4,9 +4,9 @@ import { LINKS } from "@/lib/en-garde/content";
 import { CARD } from "@/lib/en-garde/rounds";
 import { CardSlot, PixelIcon, pixelButton, sameCardProps } from "../ui";
 
-type Props = { frame: CardFrame; blinkOn: boolean; still: boolean; onResume: () => void };
+type Props = { frame: CardFrame; blinkOn: boolean; still: boolean };
 
-export const TitleCard = memo(function TitleCard({ frame, blinkOn, still, onResume }: Props) {
+export const TitleCard = memo(function TitleCard({ frame, blinkOn, still }: Props) {
   const menu = pixelButton("menu", "flex text-ps-10");
   return (
     <CardSlot card={CARD.title} frame={frame}>
@@ -22,7 +22,7 @@ export const TitleCard = memo(function TitleCard({ frame, blinkOn, still, onResu
         </h1>
         <div className="flex flex-col gap-1 font-vt text-[clamp(22px,2.2vw,30px)]/[1.15]">
           <span>Welcome to</span>
-          <span className="text-gold">A Full Stack Developer's Game</span>
+          <span className="text-gold">A Full Stack Developer&apos;s Game</span>
         </div>
         <nav aria-label="Main menu" className="flex flex-wrap justify-center gap-3.5">
           <a href={LINKS.github} target="_blank" rel="noopener" className={menu}>
@@ -33,10 +33,12 @@ export const TitleCard = memo(function TitleCard({ frame, blinkOn, still, onResu
             <PixelIcon name="inbox" size={24} />
             LINKEDIN
           </a>
-          <button type="button" onClick={onResume} className={menu}>
-            <PixelIcon name="scroll" size={24} />
-            RESUME
-          </button>
+          {LINKS.resume && (
+            <a href={LINKS.resume} download className={menu}>
+              <PixelIcon name="scroll" size={24} />
+              RESUME
+            </a>
+          )}
         </nav>
         <StartPrompt blinkOn={blinkOn} still={still} />
       </div>
@@ -44,7 +46,7 @@ export const TitleCard = memo(function TitleCard({ frame, blinkOn, still, onResu
   );
 }, sameCardProps);
 
-/** Attract-mode prompt, as on an idle cabinet: a hard-blinking call to action over a steady "FREE PLAY". */
+/** Attract-mode prompt, as on an idle cabinet: a hard-blinking call to action over the steady rules. */
 function StartPrompt({ blinkOn, still }: { blinkOn: boolean; still: boolean }) {
   return (
     <div aria-hidden="true" className="mt-1 flex flex-col items-center gap-2.5 font-pixel">
@@ -54,7 +56,6 @@ function StartPrompt({ blinkOn, still }: { blinkOn: boolean; still: boolean }) {
       >
         SCROLL TO START
       </span>
-      <span className="arcade-outline text-ps-9 tracking-[2px] text-fg/75">FREE PLAY</span>
     </div>
   );
 }
