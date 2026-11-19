@@ -55,7 +55,7 @@ export type IconName =
 export const EQUIPPED: [string, IconName][] = [
   ["React", "armor"],
   ["Redux-Observables", "armor"],
-  ["Node.js", "armor"],
+  ["REST APIs", "armor"],
   ["Java + Spring Boot", "blade"],
   ["MySQL", "shield"],
 ];
@@ -63,7 +63,7 @@ export const BACKPACK: [string, IconName][] = [
   ["JavaScript", "blade"],
   ["Spring AI", "armor"],
   ["Tailwind", "armor"],
-  ["REST APIs", "scroll"],
+  ["Node.js", "scroll"],
   ["Microservices", "scroll"],
 ];
 

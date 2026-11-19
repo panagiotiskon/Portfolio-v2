@@ -28,7 +28,7 @@ export const SITE = {
     "web developer",
     "TypeScript",
     "JavaScript",
-    "Redux",
+    "RxJS",
     "MySQL",
     "REST APIs",
     "microservices",
