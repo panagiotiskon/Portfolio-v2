@@ -83,14 +83,14 @@ export const EXP: Experience[] = [
   {
     tier: "CURRENT BOUT",
     dates: "Dec 2024 – Present",
-    role: "Software Engineer · ReactJS & ReduxJS",
+    role: "Software Engineer · ReactJS & RxJS",
     company: "Kotsovolos · PPC Group",
     brand: "#b0122c",
     accent: "#ff6b7f",
     logo: "kotsovolos",
     current: true,
     bullets: [
-      "Build and optimize the Kotsovolos website and the KRetail B2B/B2C app for in-store sales agents (ReactJS, ReduxJS).",
+      "Build and optimize the Kotsovolos website and the KRetail B2B/B2C app for in-store sales agents (ReactJS, RxJS).",
       "Analyze & implement new features focused on performance, scalability and UX.",
       "Work in an agile cross-functional team, keeping frontend and backend tightly integrated.",
     ],
